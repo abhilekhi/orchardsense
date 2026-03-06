@@ -5,1045 +5,605 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>OrchardSense</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-/* ─── RESET & TOKENS ──────────────────────────────────────── */
-*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-
-:root {
-  /* Brand palette */
-  --sage:      #4a7c59;
-  --sage-mid:  #6a9e78;
-  --sage-lt:   #a8c9b2;
-  --sage-pale: #e8f2eb;
-  --cream:     #faf8f4;
-  --stone:     #f0ece4;
-  --parchment: #e8e2d8;
-
-  /* Status */
-  --ok:        #3d7a52;
-  --ok-bg:     #edf5f0;
-  --ok-ring:   #b2d9c0;
-  --warn:      #b86e1a;
-  --warn-bg:   #fef4e8;
-  --warn-ring: #f0c98a;
-  --crit:      #b83232;
-  --crit-bg:   #fdecea;
-  --crit-ring: #f0a8a0;
-  --off:       #9a9590;
-  --off-bg:    #f2f0ec;
-  --off-ring:  #d4d0c8;
-
-  /* Text */
-  --t1: #1a1a18;
-  --t2: #5a5852;
-  --t3: #9a968e;
-  --t4: #c4c0b8;
-
-  /* Layout */
-  --r:    16px;
-  --r-sm: 10px;
-  --r-xs: 6px;
-  --sh:   0 2px 16px rgba(74,124,89,0.10), 0 1px 4px rgba(0,0,0,0.06);
-  --sh-lg:0 8px 40px rgba(74,124,89,0.14), 0 2px 8px rgba(0,0,0,0.08);
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --sage:#4a7c59;--sage-mid:#6a9e78;--sage-lt:#a8c9b2;--sage-pale:#e8f2eb;
+  --cream:#faf8f4;--stone:#f0ece4;--parchment:#e8e2d8;
+  --ok:#3d7a52;--ok-bg:#edf5f0;--ok-ring:#b2d9c0;
+  --warn:#b86e1a;--warn-bg:#fef4e8;--warn-ring:#f0c98a;
+  --crit:#b83232;--crit-bg:#fdecea;--crit-ring:#f0a8a0;
+  --off:#9a9590;--off-bg:#f2f0ec;--off-ring:#d4d0c8;
+  --t1:#1a1a18;--t2:#5a5852;--t3:#9a968e;--t4:#c4c0b8;
+  --r:16px;--r-sm:10px;
+  --sh:0 2px 16px rgba(74,124,89,.10),0 1px 4px rgba(0,0,0,.06);
+  --sh-lg:0 8px 40px rgba(74,124,89,.14),0 2px 8px rgba(0,0,0,.08)
 }
+html,body{height:100%;overflow:hidden;background:var(--cream)}
+body{font-family:'Outfit',sans-serif;color:var(--t1);display:flex;flex-direction:column;height:100dvh}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 60% at 10% -10%,rgba(168,201,178,.18) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 95% 100%,rgba(74,124,89,.08) 0%,transparent 55%)}
 
-html,body { height:100%; overflow:hidden; background:var(--cream); }
+.overlay{position:fixed;inset:0;z-index:300;background:rgba(26,26,24,.38);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:84vw;max-width:340px;z-index:301;background:rgba(250,248,244,.96);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border-right:1px solid var(--parchment);box-shadow:var(--sh-lg);transform:translateX(-100%);transition:transform .38s cubic-bezier(.25,.1,.15,1);display:flex;flex-direction:column;overflow:hidden}
+.drawer.open{transform:translateX(0)}
+.drawer::before{content:'';display:block;height:3px;background:linear-gradient(90deg,var(--sage),var(--sage-lt));flex-shrink:0}
+.drawer-head{padding:36px 24px 20px;border-bottom:1px solid var(--stone)}
+.logo-wrap{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.logo-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--sage),var(--sage-mid));display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(74,124,89,.3)}
+.logo-mark svg{width:18px;height:18px}
+.logo-text{font-family:'Lora',serif;font-size:20px;font-weight:600;color:var(--t1);letter-spacing:-.4px}
+.logo-text em{color:var(--sage);font-style:italic}
+.logo-sub{font-size:10px;color:var(--t3);letter-spacing:1.2px;text-transform:uppercase}
+.d-sec{font-size:9.5px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:var(--t4);padding:18px 24px 6px}
+.farm-item{margin:2px 12px;padding:13px 14px;border-radius:var(--r-sm);display:flex;align-items:center;gap:12px;cursor:pointer;border:1.5px solid transparent;transition:all .18s}
+.farm-item:active{transform:scale(.98)}
+.farm-item.active{background:var(--sage-pale);border-color:var(--sage-lt);box-shadow:0 1px 8px rgba(74,124,89,.12)}
+.fi-icon-wrap{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;transition:background .18s}
+.farm-item.active .fi-icon-wrap{background:rgba(74,124,89,.15)}
+.farm-item:not(.active) .fi-icon-wrap{background:var(--stone)}
+.fi-body{flex:1;min-width:0}
+.fi-name{font-size:14px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fi-meta{font-size:10.5px;color:var(--t3);margin-top:2px}
+.fi-badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;letter-spacing:.3px;white-space:nowrap}
+.fb-crit{background:var(--crit-bg);color:var(--crit);border:1px solid var(--crit-ring)}
+.fb-warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-ring)}
+.fb-ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-ring)}
+.d-divider{height:1px;background:var(--stone);margin:10px 24px}
+.d-nav{margin:1px 12px;padding:11px 14px;border-radius:var(--r-sm);display:flex;align-items:center;gap:12px;font-size:13px;color:var(--t2);cursor:pointer;transition:background .15s}
+.d-nav:active{background:var(--stone)}
+.d-nav-icon{width:32px;height:32px;border-radius:9px;background:var(--stone);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.d-nav-icon svg{width:15px;height:15px;stroke:var(--t2);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.d-gw{margin:auto 16px 24px;padding:13px 14px;background:var(--ok-bg);border:1px solid var(--ok-ring);border-radius:var(--r-sm);display:flex;align-items:center;gap:10px}
+.gw-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--ok);box-shadow:0 0 0 3px rgba(61,122,82,.2);animation:gwp 2.5s infinite}
+@keyframes gwp{0%,100%{box-shadow:0 0 0 3px rgba(61,122,82,.2)}50%{box-shadow:0 0 0 6px rgba(61,122,82,0)}}
+.gw-text{font-size:11px;line-height:1.5}
+.gw-text strong{font-weight:600;color:var(--ok)}
+.gw-text span{color:var(--t3)}
 
-body {
-  font-family:'Outfit',sans-serif;
-  color:var(--t1);
-  display:flex; flex-direction:column;
-  height:100dvh;
-}
+.topbar{display:flex;align-items:center;padding:10px 14px;gap:10px;flex-shrink:0;position:relative;z-index:10;background:rgba(250,248,244,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--stone)}
+.icon-btn{width:38px;height:38px;border-radius:11px;background:white;border:1.5px solid var(--parchment);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06);transition:all .15s}
+.icon-btn:active{background:var(--stone);transform:scale(.96)}
+.icon-btn svg{width:16px;height:16px;stroke:var(--t1);stroke-width:2;fill:none;stroke-linecap:round}
+.tb-center{flex:1;min-width:0}
+.tb-fname{font-family:'Lora',serif;font-size:16px;font-weight:600;color:var(--t1);letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-fsub{font-size:10px;color:var(--t3);letter-spacing:.5px;margin-top:1px}
+#sync-btn svg{stroke:var(--sage)}
+.sync-btn.spin svg{animation:spinit .85s cubic-bezier(.4,0,.6,1)}
+@keyframes spinit{to{transform:rotate(360deg)}}
 
-/* ─── TYPOGRAPHY ──────────────────────────────────────────── */
-.serif       { font-family:'Lora',serif; }
-.t-display   { font-family:'Lora',serif; font-size:24px; font-weight:600; letter-spacing:-.4px; }
-.t-title     { font-family:'Lora',serif; font-size:18px; font-weight:600; letter-spacing:-.2px; }
-.t-subtitle  { font-size:12px; font-weight:500; color:var(--t2); letter-spacing:.2px; }
-.t-label     { font-size:10px; font-weight:600; letter-spacing:1.4px; text-transform:uppercase; color:var(--t3); }
-.t-mono      { font-family:'Outfit',sans-serif; font-variant-numeric:tabular-nums; }
+.strip{display:flex;gap:7px;padding:9px 14px;overflow-x:auto;flex-shrink:0;border-bottom:1px solid var(--stone);background:rgba(250,248,244,.7);scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.stat-chip{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:40px;border:1.5px solid;white-space:nowrap;flex-shrink:0}
+.sc-ok{background:var(--ok-bg);border-color:var(--ok-ring)}
+.sc-w{background:var(--warn-bg);border-color:var(--warn-ring)}
+.sc-cr{background:var(--crit-bg);border-color:var(--crit-ring)}
+.sc-avg{background:white;border-color:var(--parchment);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.sc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.sc-lbl{font-size:10.5px;color:var(--t2)}
+.sc-val{font-size:10.5px;font-weight:600}
+.sc-ok .sc-val{color:var(--ok)}.sc-w .sc-val{color:var(--warn)}.sc-cr .sc-val{color:var(--crit)}.sc-avg .sc-val{color:var(--sage)}
 
-/* ─── BACKGROUND TEXTURE ──────────────────────────────────── */
-body::before {
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-  background:
-    radial-gradient(ellipse 80% 60% at 10% -10%, rgba(168,201,178,.22) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 95% 100%, rgba(74,124,89,.10) 0%, transparent 55%);
-}
+.content{flex:1;overflow:hidden;position:relative;z-index:1}
+.tc{display:none;height:100%;flex-direction:column}
+.tc.active{display:flex}
+.tc-scroll{padding:14px 14px 0;overflow-y:auto;flex:1}
+.tc-scroll::-webkit-scrollbar{display:none}
 
-/* ─── DRAWER OVERLAY ──────────────────────────────────────── */
-.overlay {
-  position:fixed; inset:0; z-index:300;
-  background:rgba(26,26,24,.35);
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
-  opacity:0; pointer-events:none;
-  transition:opacity .3s ease;
-}
-.overlay.open { opacity:1; pointer-events:all; }
+#leaflet-map{width:100%;height:48vw;min-height:210px;max-height:320px;flex-shrink:0;z-index:1}
+.map-wrap{position:relative;flex-shrink:0}
+.map-controls{position:absolute;top:8px;right:8px;z-index:400;display:flex;flex-direction:column;gap:5px}
+.map-ctrl-btn{background:white;border:1.5px solid var(--parchment);border-radius:9px;padding:6px 11px;font-size:10px;font-weight:600;color:var(--t2);cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.1);transition:all .15s;white-space:nowrap}
+.map-ctrl-btn:active{background:var(--stone);transform:scale(.97)}
+.map-ctrl-btn.active-layer{background:var(--sage-pale);color:var(--sage);border-color:var(--sage-lt)}
+.map-bottom{flex:1;overflow-y:auto;padding:14px}
+.map-bottom::-webkit-scrollbar{display:none}
 
-/* ─── DRAWER ──────────────────────────────────────────────── */
-.drawer {
-  position:fixed; top:0; left:0; bottom:0;
-  width:84vw; max-width:340px; z-index:301;
-  background:rgba(250,248,244,.94);
-  backdrop-filter:blur(20px) saturate(1.4);
-  -webkit-backdrop-filter:blur(20px) saturate(1.4);
-  border-right:1px solid var(--parchment);
-  box-shadow:var(--sh-lg);
-  transform:translateX(-100%);
-  transition:transform .38s cubic-bezier(.25,.1,.15,1);
-  display:flex; flex-direction:column;
-  overflow:hidden;
-}
-.drawer.open { transform:translateX(0); }
+.leaflet-popup-content-wrapper{background:white;border-radius:12px;box-shadow:var(--sh-lg);border:1.5px solid var(--parchment);padding:0;overflow:hidden}
+.leaflet-popup-content{margin:0;line-height:1}
+.leaflet-popup-tip-container{display:none}
+.map-popup{padding:12px 14px}
+.mp-name{font-family:'Lora',serif;font-size:15px;font-weight:600;color:var(--t1)}
+.mp-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:12px;flex-wrap:wrap}
+.mp-stat{font-size:11px;color:var(--t2)}
+.mp-pill{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px}
 
-/* Drawer top accent bar */
-.drawer::before {
-  content:''; display:block; height:3px;
-  background:linear-gradient(90deg, var(--sage), var(--sage-lt));
-  flex-shrink:0;
-}
+.farm-marker-icon{background:none;border:none}
+.farm-pin{background:var(--sage);color:white;font-size:10px;font-weight:600;font-family:'Outfit',sans-serif;padding:4px 9px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(74,124,89,.4);border:2px solid white}
+.farm-pin.current{background:white;color:var(--sage);border-color:var(--sage)}
 
-.drawer-head {
-  padding:36px 24px 20px;
-  border-bottom:1px solid var(--stone);
-}
+.alert-card{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--crit-bg);border:1.5px solid var(--crit-ring);border-radius:var(--r-sm);margin-bottom:9px;cursor:pointer;transition:all .15s;box-shadow:0 1px 6px rgba(184,50,50,.08)}
+.alert-card:active{transform:scale(.99);background:#fce8e6}
+.ac-icon-wrap{width:34px;height:34px;border-radius:9px;flex-shrink:0;background:rgba(184,50,50,.12);display:flex;align-items:center;justify-content:center}
+.ac-icon-wrap svg{width:16px;height:16px;stroke:var(--crit);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ac-body{flex:1}
+.ac-title{font-size:12px;font-weight:600;color:var(--crit)}
+.ac-sub{font-size:11px;color:var(--t3);margin-top:2px}
+.ac-arr{color:var(--crit);font-size:18px;opacity:.6}
 
-/* Logo mark */
-.logo-wrap { display:flex; align-items:center; gap:10px; margin-bottom:4px; }
-.logo-mark {
-  width:34px; height:34px; border-radius:10px;
-  background:linear-gradient(135deg, var(--sage), var(--sage-mid));
-  display:flex; align-items:center; justify-content:center;
-  box-shadow:0 2px 8px rgba(74,124,89,.3);
-}
-.logo-mark svg { width:18px; height:18px; }
-.logo-text { font-family:'Lora',serif; font-size:20px; font-weight:600; color:var(--t1); letter-spacing:-.4px; }
-.logo-text em { color:var(--sage); font-style:italic; }
-.logo-sub { font-size:10px; color:var(--t3); letter-spacing:1.2px; text-transform:uppercase; }
+.detail-card{background:white;border:1.5px solid var(--parchment);border-radius:var(--r);overflow:hidden;margin-bottom:14px;box-shadow:var(--sh);animation:fadein .22s ease}
+.dcbar{height:4px;width:100%}
+.bar-ok{background:linear-gradient(90deg,var(--ok),var(--sage-mid))}
+.bar-warn{background:linear-gradient(90deg,var(--warn),#e8a050)}
+.bar-crit{background:linear-gradient(90deg,var(--crit),#e06060)}
+.bar-off{background:linear-gradient(90deg,var(--off),var(--t4))}
+.detail-inner{padding:16px}
+.detail-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.detail-name{font-family:'Lora',serif;font-size:20px;font-weight:600;color:var(--t1);letter-spacing:-.3px}
+.detail-crop{font-size:11px;color:var(--t3);margin-top:3px;letter-spacing:.3px}
+.spill{font-size:10.5px;font-weight:600;letter-spacing:.5px;padding:5px 11px;border-radius:20px;border:1.5px solid;white-space:nowrap}
+.pill-ok{background:var(--ok-bg);color:var(--ok);border-color:var(--ok-ring)}
+.pill-warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-ring)}
+.pill-crit{background:var(--crit-bg);color:var(--crit);border-color:var(--crit-ring)}
+.pill-off{background:var(--off-bg);color:var(--off);border-color:var(--off-ring)}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.metric{background:var(--cream);border:1px solid var(--stone);border-radius:var(--r-sm);padding:11px 10px;text-align:center}
+.metric-val{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--t1);line-height:1;letter-spacing:-.5px}
+.metric-label{font-size:9px;font-weight:600;color:var(--t3);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px}
+.spark-wrap{margin-bottom:14px}
+.spark{height:46px;display:flex;align-items:flex-end;gap:4px}
+.sp-bar{flex:1;border-radius:4px 4px 0 0;min-height:4px}
+.spark-ticks{display:flex;justify-content:space-between;font-size:8.5px;color:var(--t4);margin-top:5px}
+.ddetail-divider{height:1px;background:var(--stone);margin:0 0 14px}
+.action-btn{width:100%;padding:14px;border:none;border-radius:var(--r-sm);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s}
+.action-btn:active{transform:scale(.99);opacity:.88}
+.btn-ok{background:var(--ok-bg);color:var(--ok);border:1.5px solid var(--ok-ring)}
+.btn-warn{background:var(--warn-bg);color:var(--warn);border:1.5px solid var(--warn-ring)}
+.btn-crit{background:var(--crit);color:white;box-shadow:0 2px 12px rgba(184,50,50,.3)}
+.btn-off{background:var(--off-bg);color:var(--off);border:1.5px solid var(--off-ring)}
 
-/* Drawer section */
-.d-sec { font-size:9.5px; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; color:var(--t4); padding:18px 24px 6px; }
+.zone-row{display:flex;align-items:center;gap:12px;padding:14px;background:white;border:1.5px solid var(--parchment);border-radius:var(--r-sm);margin-bottom:8px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.04);transition:all .15s}
+.zone-row:active{background:var(--cream);transform:scale(.99)}
+.zr-stripe{width:4px;align-self:stretch;border-radius:4px;flex-shrink:0}
+.zr-info{flex:1;min-width:0}
+.zr-name{font-size:14px;font-weight:500;color:var(--t1)}
+.zr-meta{font-size:10.5px;color:var(--t3);margin-top:2px}
+.zr-right{text-align:right}
+.zr-pct{font-family:'Lora',serif;font-size:24px;font-weight:600;line-height:1;letter-spacing:-.5px}
+.zr-status{font-size:9.5px;font-weight:600;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
 
-/* Farm item */
-.farm-item {
-  margin:2px 12px; padding:13px 14px;
-  border-radius:var(--r-sm);
-  display:flex; align-items:center; gap:12px;
-  cursor:pointer; border:1.5px solid transparent;
-  transition:all .18s ease;
-  position:relative;
-}
-.farm-item:active { transform:scale(.98); }
-.farm-item.active {
-  background:var(--sage-pale);
-  border-color:var(--sage-lt);
-  box-shadow:0 1px 8px rgba(74,124,89,.12);
-}
+.hist-card{background:white;border:1.5px solid var(--parchment);border-radius:var(--r);padding:15px;margin-bottom:12px;box-shadow:var(--sh)}
+.hist-title{font-size:10.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--t3);margin-bottom:14px}
+.big-chart{height:108px;display:flex;align-items:flex-end;gap:6px}
+.bc-grp{flex:1;display:flex;gap:2px;align-items:flex-end}
+.bc-bar{flex:1;border-radius:4px 4px 0 0;min-height:4px}
+.bc-lbls{display:flex;justify-content:space-between;font-size:9px;color:var(--t4);margin-top:7px}
+.ev-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--stone)}
+.ev-row:last-child{border-bottom:none;padding-bottom:0}
+.ev-pip{width:4px;height:36px;border-radius:3px;flex-shrink:0}
+.ev-name{font-size:12px;font-weight:500;color:var(--t1)}
+.ev-desc{font-size:10.5px;color:var(--t3);margin-top:2px}
 
-.fi-icon-wrap {
-  width:40px; height:40px; border-radius:12px; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center; font-size:18px;
-  transition:background .18s;
-}
-.farm-item.active .fi-icon-wrap { background:rgba(74,124,89,.15); }
-.farm-item:not(.active) .fi-icon-wrap { background:var(--stone); }
-
-.fi-body { flex:1; min-width:0; }
-.fi-name { font-size:14px; font-weight:500; color:var(--t1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.fi-meta { font-size:10.5px; color:var(--t3); margin-top:2px; }
-
-.fi-badge {
-  font-size:10px; font-weight:600; padding:3px 9px;
-  border-radius:20px; letter-spacing:.3px; white-space:nowrap;
-}
-.fb-crit { background:var(--crit-bg); color:var(--crit); border:1px solid var(--crit-ring); }
-.fb-warn { background:var(--warn-bg); color:var(--warn); border:1px solid var(--warn-ring); }
-.fb-ok   { background:var(--ok-bg);   color:var(--ok);   border:1px solid var(--ok-ring);   }
-
-/* Drawer nav */
-.d-divider { height:1px; background:var(--stone); margin:10px 24px; }
-.d-nav {
-  margin:1px 12px; padding:11px 14px;
-  border-radius:var(--r-sm); display:flex; align-items:center; gap:12px;
-  font-size:13px; color:var(--t2); cursor:pointer;
-  transition:background .15s;
-}
-.d-nav:active { background:var(--stone); }
-.d-nav-icon {
-  width:32px; height:32px; border-radius:9px; background:var(--stone);
-  display:flex; align-items:center; justify-content:center;
-  flex-shrink:0;
-}
-.d-nav-icon svg { width:15px; height:15px; stroke:var(--t2); stroke-width:1.8; fill:none; stroke-linecap:round; stroke-linejoin:round; }
-
-/* Gateway status */
-.d-gw {
-  margin:auto 16px 24px;
-  padding:13px 14px;
-  background:var(--ok-bg);
-  border:1px solid var(--ok-ring);
-  border-radius:var(--r-sm);
-  display:flex; align-items:center; gap:10px;
-}
-.gw-dot {
-  width:8px; height:8px; border-radius:50%; flex-shrink:0;
-  background:var(--ok);
-  box-shadow:0 0 0 3px rgba(61,122,82,.2);
-  animation:gwpulse 2.5s infinite;
-}
-@keyframes gwpulse {
-  0%,100%{ box-shadow:0 0 0 3px rgba(61,122,82,.2); }
-  50%    { box-shadow:0 0 0 6px rgba(61,122,82,0); }
-}
-.gw-text { font-size:11px; line-height:1.5; }
-.gw-text strong { font-weight:600; color:var(--ok); }
-.gw-text span { color:var(--t3); }
-
-/* ─── TOP BAR ─────────────────────────────────────────────── */
-.topbar {
-  display:flex; align-items:center; padding:10px 14px 10px; gap:10px;
-  flex-shrink:0; position:relative; z-index:10;
-  background:rgba(250,248,244,.88);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--stone);
-}
-
-.menu-btn {
-  width:38px; height:38px; border-radius:11px;
-  background:white; border:1.5px solid var(--parchment);
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; flex-shrink:0;
-  box-shadow:0 1px 4px rgba(0,0,0,.06);
-  transition:all .15s;
-}
-.menu-btn:active { background:var(--stone); transform:scale(.96); }
-.menu-btn svg { width:16px; height:16px; stroke:var(--t1); stroke-width:2; fill:none; stroke-linecap:round; }
-
-.tb-center { flex:1; min-width:0; }
-.tb-farm-name {
-  font-family:'Lora',serif; font-size:16px; font-weight:600;
-  color:var(--t1); letter-spacing:-.2px;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.tb-farm-sub { font-size:10px; color:var(--t3); letter-spacing:.5px; margin-top:1px; }
-
-.sync-btn {
-  width:38px; height:38px; border-radius:11px;
-  background:white; border:1.5px solid var(--parchment);
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; flex-shrink:0;
-  box-shadow:0 1px 4px rgba(0,0,0,.06);
-  transition:all .15s;
-}
-.sync-btn:active { transform:scale(.96); }
-.sync-btn svg { width:16px; height:16px; stroke:var(--sage); stroke-width:2.2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
-.sync-btn.spin svg { animation:spinit .8s cubic-bezier(.4,0,.6,1); }
-@keyframes spinit { to { transform:rotate(360deg); } }
-
-/* ─── STAT STRIP ──────────────────────────────────────────── */
-.strip {
-  display:flex; gap:7px; padding:10px 14px;
-  overflow-x:auto; flex-shrink:0;
-  border-bottom:1px solid var(--stone);
-  scrollbar-width:none;
-  background:rgba(250,248,244,.7);
-}
-.strip::-webkit-scrollbar { display:none; }
-
-.stat-chip {
-  display:flex; align-items:center; gap:7px;
-  padding:7px 12px; border-radius:40px;
-  border:1.5px solid; white-space:nowrap; flex-shrink:0;
-  cursor:default;
-  transition:transform .12s;
-}
-.stat-chip:active { transform:scale(.97); }
-.sc-ok   { background:var(--ok-bg);   border-color:var(--ok-ring);   }
-.sc-warn { background:var(--warn-bg); border-color:var(--warn-ring); }
-.sc-crit { background:var(--crit-bg); border-color:var(--crit-ring); }
-.sc-off  { background:var(--off-bg);  border-color:var(--off-ring);  }
-.sc-avg  { background:white;          border-color:var(--parchment); box-shadow:0 1px 4px rgba(0,0,0,.05); }
-
-.sc-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
-.sc-label { font-size:10.5px; font-weight:400; color:var(--t2); }
-.sc-val   { font-size:10.5px; font-weight:600; }
-.sc-ok   .sc-val { color:var(--ok);   }
-.sc-warn .sc-val { color:var(--warn); }
-.sc-crit .sc-val { color:var(--crit); }
-.sc-off  .sc-val { color:var(--off);  }
-.sc-avg  .sc-val { color:var(--sage); }
-
-/* ─── CONTENT ─────────────────────────────────────────────── */
-.content { flex:1; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; position:relative; z-index:1; }
-.content::-webkit-scrollbar { display:none; }
-
-/* ─── TABS ────────────────────────────────────────────────── */
-.tc { display:none; padding:14px 14px 0; animation:fadein .28s ease; }
-.tc.active { display:block; }
-@keyframes fadein { from{opacity:0; transform:translateY(5px)} to{opacity:1; transform:translateY(0)} }
-
-/* ─── ALERT CARDS ─────────────────────────────────────────── */
-.alert-card {
-  display:flex; align-items:center; gap:12px;
-  padding:12px 14px;
-  background:var(--crit-bg);
-  border:1.5px solid var(--crit-ring);
-  border-radius:var(--r-sm);
-  margin-bottom:9px; cursor:pointer;
-  transition:all .15s;
-  box-shadow:0 1px 6px rgba(184,50,50,.08);
-}
-.alert-card:active { transform:scale(.99); background:#fce8e6; }
-
-.ac-icon-wrap {
-  width:34px; height:34px; border-radius:9px; flex-shrink:0;
-  background:rgba(184,50,50,.12);
-  display:flex; align-items:center; justify-content:center;
-}
-.ac-icon-wrap svg { width:16px; height:16px; stroke:var(--crit); stroke-width:2; fill:none; stroke-linecap:round; stroke-linejoin:round; }
-
-.ac-body { flex:1; }
-.ac-title { font-size:12px; font-weight:600; color:var(--crit); }
-.ac-sub   { font-size:11px; color:var(--t3); margin-top:2px; }
-.ac-arr   { color:var(--crit); font-size:18px; opacity:.6; }
-
-/* ─── MAP CARD ────────────────────────────────────────────── */
-.map-card {
-  background:white;
-  border:1.5px solid var(--parchment);
-  border-radius:var(--r);
-  padding:14px;
-  margin-bottom:14px;
-  box-shadow:var(--sh);
-}
-
-.map-card-head {
-  display:flex; justify-content:space-between; align-items:center;
-  margin-bottom:13px;
-}
-.map-card-title { font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--t3); }
-.map-compass { font-size:11px; color:var(--t4); display:flex; align-items:center; gap:3px; }
-
-.map-grid {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:6px;
-}
-
-/* Zone cells */
-.zc {
-  border-radius:var(--r-sm);
-  height:70px;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  cursor:pointer; position:relative; overflow:hidden;
-  transition:transform .15s, box-shadow .15s;
-  border:2px solid transparent;
-}
-.zc:active { transform:scale(.94); }
-.zc.sel {
-  border-color:var(--t1) !important;
-  box-shadow:0 0 0 4px rgba(26,26,24,.12);
-  transform:scale(1.02);
-  z-index:2;
-}
-.zc.sp2 { grid-column:span 2; }
-
-/* Status gradients */
-.s-ok   { background:linear-gradient(155deg, #c8e8d0 0%, #a8d4b5 100%); }
-.s-warn { background:linear-gradient(155deg, #fde8c4 0%, #f8d098 100%); }
-.s-crit { background:linear-gradient(155deg, #fcccc4 0%, #f4a898 100%); }
-.s-off  { background:linear-gradient(155deg, #edeae4 0%, #e0dbd2 100%); }
-
-/* Glass sheen on cells */
-.zc::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:40%;
-  background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,0));
-  pointer-events:none; border-radius:inherit;
-}
-
-/* Critical pulse ring */
-.s-crit.zc::after {
-  content:''; position:absolute; inset:-3px;
-  border-radius:11px;
-  border:2px solid rgba(184,50,50,.5);
-  animation:critring 2.2s ease infinite;
-  pointer-events:none;
-}
-@keyframes critring {
-  0%   { opacity:.7; transform:scale(1); }
-  100% { opacity:0;  transform:scale(1.14); }
-}
-
-.zc-pct {
-  font-family:'Lora',serif; font-size:20px; font-weight:600;
-  color:var(--t1); line-height:1; letter-spacing:-.5px;
-  position:relative; z-index:1;
-}
-.s-off .zc-pct { color:var(--t3); }
-
-.zc-name {
-  font-size:8.5px; font-weight:500; color:rgba(26,26,24,.65);
-  margin-top:3px; text-align:center; letter-spacing:.2px; line-height:1.2;
-  position:relative; z-index:1;
-}
-
-.zc-badge {
-  position:absolute; top:5px; right:6px;
-  font-size:9px; opacity:.8;
-  position:absolute; z-index:1;
-}
-
-/* Legend */
-.map-legend {
-  display:flex; flex-wrap:wrap; gap:10px;
-  margin-top:12px; padding-top:12px;
-  border-top:1px solid var(--stone);
-}
-.leg { display:flex; align-items:center; gap:5px; }
-.leg-sw { width:10px; height:10px; border-radius:3px; }
-.leg-lbl { font-size:9.5px; color:var(--t3); }
-
-/* ─── ZONE DETAIL CARD ────────────────────────────────────── */
-.detail-card {
-  background:white;
-  border:1.5px solid var(--parchment);
-  border-radius:var(--r);
-  overflow:hidden;
-  margin-bottom:14px;
-  box-shadow:var(--sh);
-  animation:fadein .22s ease;
-}
-
-/* Colored top strip based on status */
-.detail-card-bar { height:4px; width:100%; }
-.bar-ok   { background:linear-gradient(90deg, var(--ok), var(--sage-mid)); }
-.bar-warn { background:linear-gradient(90deg, var(--warn), #e8a050); }
-.bar-crit { background:linear-gradient(90deg, var(--crit), #e06060); }
-.bar-off  { background:linear-gradient(90deg, var(--off), var(--t4)); }
-
-.detail-inner { padding:16px; }
-.detail-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
-.detail-name { font-family:'Lora',serif; font-size:20px; font-weight:600; color:var(--t1); letter-spacing:-.3px; }
-.detail-crop { font-size:11px; color:var(--t3); margin-top:3px; letter-spacing:.3px; }
-
-/* Status pill */
-.status-pill {
-  font-size:10.5px; font-weight:600; letter-spacing:.5px;
-  padding:5px 11px; border-radius:20px; border:1.5px solid; white-space:nowrap;
-}
-.pill-ok   { background:var(--ok-bg);   color:var(--ok);   border-color:var(--ok-ring);   }
-.pill-warn { background:var(--warn-bg); color:var(--warn); border-color:var(--warn-ring); }
-.pill-crit { background:var(--crit-bg); color:var(--crit); border-color:var(--crit-ring); }
-.pill-off  { background:var(--off-bg);  color:var(--off);  border-color:var(--off-ring);  }
-
-/* Metrics row */
-.metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
-.metric {
-  background:var(--cream); border:1px solid var(--stone);
-  border-radius:var(--r-sm); padding:11px 10px; text-align:center;
-}
-.metric-val {
-  font-family:'Lora',serif; font-size:22px; font-weight:600;
-  color:var(--t1); line-height:1; letter-spacing:-.5px;
-}
-.metric-label { font-size:9px; font-weight:600; color:var(--t3); letter-spacing:1.2px; text-transform:uppercase; margin-top:4px; }
-
-/* Sparkline */
-.spark-wrap { margin-bottom:14px; }
-.spark { height:46px; display:flex; align-items:flex-end; gap:4px; }
-.sp-bar { flex:1; border-radius:4px 4px 0 0; min-height:4px; transition:height .35s cubic-bezier(.34,1.56,.64,1); }
-.spark-ticks { display:flex; justify-content:space-between; font-size:8.5px; color:var(--t4); margin-top:5px; }
-
-/* Divider */
-.detail-divider { height:1px; background:var(--stone); margin:0 0 14px; }
-
-/* Action button */
-.action-btn {
-  width:100%; padding:14px; border:none; border-radius:var(--r-sm);
-  font-family:'Outfit',sans-serif; font-size:12px; font-weight:600;
-  letter-spacing:.8px; text-transform:uppercase; cursor:pointer;
-  display:flex; align-items:center; justify-content:center; gap:8px;
-  transition:all .15s;
-}
-.action-btn:active { transform:scale(.99); opacity:.88; }
-
-.btn-ok   { background:var(--ok-bg);   color:var(--ok);   border:1.5px solid var(--ok-ring);   }
-.btn-warn { background:var(--warn-bg); color:var(--warn); border:1.5px solid var(--warn-ring); }
-.btn-crit { background:var(--crit);    color:white;        box-shadow:0 2px 12px rgba(184,50,50,.3); }
-.btn-off  { background:var(--off-bg);  color:var(--off);  border:1.5px solid var(--off-ring);  }
-
-/* ─── ZONE LIST ───────────────────────────────────────────── */
-.zone-row {
-  display:flex; align-items:center; gap:12px;
-  padding:14px 14px;
-  background:white; border:1.5px solid var(--parchment);
-  border-radius:var(--r-sm); margin-bottom:8px;
-  cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.04);
-  transition:all .15s;
-}
-.zone-row:active { background:var(--cream); transform:scale(.99); }
-
-.zr-stripe { width:4px; align-self:stretch; border-radius:4px; flex-shrink:0; }
-.zr-info { flex:1; min-width:0; }
-.zr-name { font-size:14px; font-weight:500; color:var(--t1); }
-.zr-meta { font-size:10.5px; color:var(--t3); margin-top:2px; }
-.zr-right { text-align:right; }
-.zr-pct { font-family:'Lora',serif; font-size:24px; font-weight:600; line-height:1; letter-spacing:-.5px; }
-.zr-status { font-size:9.5px; font-weight:600; color:var(--t3); margin-top:2px; text-transform:uppercase; letter-spacing:.5px; }
-
-/* ─── HISTORY ─────────────────────────────────────────────── */
-.hist-card {
-  background:white; border:1.5px solid var(--parchment);
-  border-radius:var(--r); padding:15px; margin-bottom:12px;
-  box-shadow:var(--sh);
-}
-.hist-title { font-size:10.5px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--t3); margin-bottom:14px; }
-
-.big-chart { height:108px; display:flex; align-items:flex-end; gap:6px; }
-.bc-grp { flex:1; display:flex; gap:2px; align-items:flex-end; }
-.bc-bar { flex:1; border-radius:4px 4px 0 0; min-height:4px; }
-.bc-lbls { display:flex; justify-content:space-between; font-size:9px; color:var(--t4); margin-top:7px; }
-
-/* Event list */
-.ev-row {
-  display:flex; align-items:center; gap:12px;
-  padding:10px 0; border-bottom:1px solid var(--stone);
-}
-.ev-row:last-child { border-bottom:none; padding-bottom:0; }
-.ev-pip { width:4px; height:36px; border-radius:3px; flex-shrink:0; }
-.ev-name { font-size:12px; font-weight:500; color:var(--t1); }
-.ev-desc { font-size:10.5px; color:var(--t3); margin-top:2px; }
-
-/* ─── BOTTOM TAB BAR ──────────────────────────────────────── */
-.tabbar {
-  display:flex;
-  background:rgba(250,248,244,.95);
-  backdrop-filter:blur(16px);
-  -webkit-backdrop-filter:blur(16px);
-  border-top:1px solid var(--stone);
-  flex-shrink:0;
-  padding-bottom:env(safe-area-inset-bottom, 0px);
-}
-.tb {
-  flex:1; padding:10px 0 8px;
-  display:flex; flex-direction:column; align-items:center; gap:4px;
-  cursor:pointer; color:var(--t4); transition:color .2s;
-  position:relative;
-}
-.tb.active { color:var(--sage); }
-.tb.active::before {
-  content:''; position:absolute; top:0; left:50%; transform:translateX(-50%);
-  width:28px; height:2.5px; background:var(--sage);
-  border-radius:0 0 3px 3px;
-}
-.tb svg { width:21px; height:21px; stroke:currentColor; stroke-width:1.7; fill:none; stroke-linecap:round; stroke-linejoin:round; }
-.tb-lbl { font-size:9.5px; font-weight:500; letter-spacing:.3px; }
-
-.pad { height:24px; }
+.tabbar{display:flex;background:rgba(250,248,244,.95);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--stone);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0)}
+.tb{flex:1;padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;color:var(--t4);transition:color .2s;position:relative}
+.tb.active{color:var(--sage)}
+.tb.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2.5px;background:var(--sage);border-radius:0 0 3px 3px}
+.tb svg{width:21px;height:21px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tb-lbl{font-size:9.5px;font-weight:500;letter-spacing:.3px}
+.pad{height:24px}
+@keyframes fadein{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.empty-state{text-align:center;padding:40px 20px;font-size:12px;color:var(--t3);line-height:1.6}
 </style>
 </head>
 <body>
 
-<!-- OVERLAY -->
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
 
-<!-- DRAWER -->
 <div class="drawer" id="drawer">
   <div class="drawer-head">
     <div class="logo-wrap">
       <div class="logo-mark">
-        <!-- Leaf SVG icon -->
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 24 24" fill="none">
           <path d="M12 22C12 22 4 17 4 10C4 6.13 7.13 3 11 3C11.34 3 11.67 3.03 12 3.08C12.33 3.03 12.66 3 13 3C16.87 3 20 6.13 20 10C20 17 12 22 12 22Z" fill="rgba(255,255,255,0.9)"/>
           <path d="M12 22V8M12 8C12 8 9 11 7 14" stroke="rgba(74,124,89,0.5)" stroke-width="1.2" stroke-linecap="round"/>
         </svg>
       </div>
       <div class="logo-text">Orchard<em>Sense</em></div>
     </div>
-    <div class="logo-sub">3 farms · 10 sensors active</div>
+    <div class="logo-sub">3 farms · BC Okanagan</div>
   </div>
-
   <div class="d-sec">Your Farms</div>
-
   <div class="farm-item active" id="fi-0" onclick="selectFarm(0)">
     <div class="fi-icon-wrap">🏡</div>
-    <div class="fi-body">
-      <div class="fi-name">Home Ranch</div>
-      <div class="fi-meta">Gateway here · 35 acres</div>
-    </div>
+    <div class="fi-body"><div class="fi-name">Home Farm</div><div class="fi-meta">Gateway here · 11 blocks</div></div>
     <div class="fi-badge fb-crit" id="fib-0">2 alerts</div>
   </div>
-
   <div class="farm-item" id="fi-1" onclick="selectFarm(1)">
     <div class="fi-icon-wrap">🌳</div>
-    <div class="fi-body">
-      <div class="fi-name">North Ridge</div>
-      <div class="fi-meta">3.2 km · 28 acres</div>
-    </div>
-    <div class="fi-badge fb-warn" id="fib-1">1 watch</div>
+    <div class="fi-body"><div class="fi-name">Jones Flat</div><div class="fi-meta">~2.5 km NW · no blocks yet</div></div>
+    <div class="fi-badge fb-ok" id="fib-1">No sensors</div>
   </div>
-
   <div class="farm-item" id="fi-2" onclick="selectFarm(2)">
     <div class="fi-icon-wrap">🍒</div>
-    <div class="fi-body">
-      <div class="fi-name">Valley Flats</div>
-      <div class="fi-meta">5.1 km · 22 acres</div>
-    </div>
-    <div class="fi-badge fb-ok" id="fib-2">All good</div>
+    <div class="fi-body"><div class="fi-name">Dump Road</div><div class="fi-meta">~3.5 km W · no blocks yet</div></div>
+    <div class="fi-badge fb-ok" id="fib-2">No sensors</div>
   </div>
-
   <div class="d-divider"></div>
   <div class="d-sec">Settings</div>
-
-  <div class="d-nav">
-    <div class="d-nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14M8.46 8.46a5 5 0 0 0 0 7.07"/></svg></div>
-    Sensor Configuration
-  </div>
-  <div class="d-nav">
-    <div class="d-nav-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
-    Alert Thresholds
-  </div>
-  <div class="d-nav">
-    <div class="d-nav-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
-    Gateway Status
-  </div>
-
+  <div class="d-nav"><div class="d-nav-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></div>Sensor Configuration</div>
+  <div class="d-nav"><div class="d-nav-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>Alert Thresholds</div>
+  <div class="d-nav"><div class="d-nav-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>Gateway Status</div>
   <div class="d-gw">
     <div class="gw-dot"></div>
-    <div class="gw-text">
-      <strong>LoRa Gateway Online</strong><br>
-      <span>Home Ranch · –94 dBm · All sensors OK</span>
-    </div>
+    <div class="gw-text"><strong>LoRa Gateway Online</strong><br><span>Home Farm · –94 dBm · All sensors OK</span></div>
   </div>
 </div>
 
-<!-- TOP BAR -->
 <div class="topbar">
-  <div class="menu-btn" onclick="openDrawer()" aria-label="Open menu">
-    <svg viewBox="0 0 24 24"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
-  </div>
+  <div class="icon-btn" onclick="openDrawer()"><svg viewBox="0 0 24 24"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg></div>
   <div class="tb-center">
-    <div class="tb-farm-name" id="tb-fname">Home Ranch</div>
-    <div class="tb-farm-sub" id="tb-fsub">Gateway · 35 acres</div>
+    <div class="tb-fname" id="tb-fname">Home Farm</div>
+    <div class="tb-fsub" id="tb-fsub">Gateway · 11 blocks</div>
   </div>
-  <div class="sync-btn" id="sync-btn" onclick="doSync()" aria-label="Sync data">
+  <div class="icon-btn sync-btn" id="sync-btn" onclick="doSync()">
     <svg id="sync-ico" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
   </div>
 </div>
 
-<!-- STAT STRIP -->
 <div class="strip" id="strip"></div>
 
-<!-- CONTENT -->
 <div class="content">
 
-  <!-- MAP TAB -->
   <div class="tc active" id="tc-map">
-    <div id="alert-area"></div>
-    <div class="map-card">
-      <div class="map-card-head">
-        <span class="map-card-title" id="map-title">Orchard Map</span>
-        <span class="map-compass">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-          North
-        </span>
-      </div>
-      <div class="map-grid" id="map-grid"></div>
-      <div class="map-legend">
-        <div class="leg"><div class="leg-sw" style="background:linear-gradient(135deg,#c8e8d0,#a8d4b5)"></div><span class="leg-lbl">Good ≥ 50%</span></div>
-        <div class="leg"><div class="leg-sw" style="background:linear-gradient(135deg,#fde8c4,#f8d098)"></div><span class="leg-lbl">Watch 30–49%</span></div>
-        <div class="leg"><div class="leg-sw" style="background:linear-gradient(135deg,#fcccc4,#f4a898)"></div><span class="leg-lbl">Critical &lt; 30%</span></div>
-        <div class="leg"><div class="leg-sw" style="background:linear-gradient(135deg,#edeae4,#e0dbd2)"></div><span class="leg-lbl">Offline</span></div>
+    <div class="map-wrap">
+      <div id="leaflet-map"></div>
+      <div class="map-controls">
+        <div class="map-ctrl-btn active-layer" id="btn-sat" onclick="setLayer('sat')">🛰 Satellite</div>
+        <div class="map-ctrl-btn" id="btn-street" onclick="setLayer('street')">🗺 Street</div>
       </div>
     </div>
-    <div id="detail-area"></div>
-    <div class="pad"></div>
+    <div class="map-bottom">
+      <div id="alert-area"></div>
+      <div id="detail-area"></div>
+      <div class="pad"></div>
+    </div>
   </div>
 
-  <!-- ZONES TAB -->
   <div class="tc" id="tc-zones">
-    <div id="zones-list"></div>
-    <div class="pad"></div>
+    <div class="tc-scroll">
+      <div id="zones-list"></div>
+      <div class="pad"></div>
+    </div>
   </div>
 
-  <!-- HISTORY TAB -->
   <div class="tc" id="tc-history">
-    <div class="hist-card">
-      <div class="hist-title">7-Day Average Moisture</div>
-      <div class="big-chart" id="bc"></div>
-      <div class="bc-lbls" id="bc-lbls"></div>
-      <div class="map-legend" style="margin-top:10px">
-        <div class="leg"><div class="leg-sw" style="background:#a8d4b5;border-radius:3px"></div><span class="leg-lbl">Apple blocks</span></div>
-        <div class="leg"><div class="leg-sw" style="background:#f8c880;border-radius:3px"></div><span class="leg-lbl">Cherry blocks</span></div>
+    <div class="tc-scroll">
+      <div class="hist-card">
+        <div class="hist-title">7-Day Average Moisture — Home Farm</div>
+        <div class="big-chart" id="bc"></div>
+        <div class="bc-lbls" id="bc-lbls"></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">
+          <div style="display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--t3)"><div style="width:10px;height:10px;border-radius:3px;background:#a8d4b5"></div>Apple</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--t3)"><div style="width:10px;height:10px;border-radius:3px;background:#f8c880"></div>Cherry</div>
+        </div>
       </div>
+      <div class="hist-card">
+        <div class="hist-title">Recent Events</div>
+        <div id="ev-log"></div>
+      </div>
+      <div class="pad"></div>
     </div>
-    <div class="hist-card">
-      <div class="hist-title">Recent Events</div>
-      <div id="ev-log"></div>
-    </div>
-    <div class="pad"></div>
   </div>
 
 </div>
 
-<!-- TAB BAR -->
 <div class="tabbar">
-  <div class="tb active" id="tb-map" onclick="switchTab('map')" aria-label="Map view">
+  <div class="tb active" id="tb-map" onclick="switchTab('map')">
     <svg viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
     <span class="tb-lbl">Map</span>
   </div>
-  <div class="tb" id="tb-zones" onclick="switchTab('zones')" aria-label="Zone list">
+  <div class="tb" id="tb-zones" onclick="switchTab('zones')">
     <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="3" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="3" cy="18" r="1" fill="currentColor" stroke="none"/></svg>
     <span class="tb-lbl">Zones</span>
   </div>
-  <div class="tb" id="tb-history" onclick="switchTab('history')" aria-label="History">
+  <div class="tb" id="tb-history" onclick="switchTab('history')">
     <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
     <span class="tb-lbl">History</span>
   </div>
 </div>
 
 <script>
-/* ─── DATA ───────────────────────────────────────────── */
-const FARMS = [
-  {
-    id:0, name:'Home Ranch', icon:'🏡', sub:'Gateway · 35 acres',
-    zones:[
-      {id:'A1', name:'Block A1', crop:'Apple',  m:68, t:17, d:12, c:1,r:1,cs:2,rs:1, w:'6h ago'},
-      {id:'A2', name:'Block A2', crop:'Apple',  m:72, t:17, d:12, c:3,r:1,cs:2,rs:1, w:'6h ago'},
-      {id:'B1', name:'Block B1', crop:'Cherry', m:24, t:21, d:8,  c:1,r:2,cs:1,rs:2, w:'2d ago'},
-      {id:'B2', name:'Block B2', crop:'Cherry', m:42, t:20, d:8,  c:2,r:2,cs:1,rs:1, w:'1d ago'},
-      {id:'B3', name:'Block B3', crop:'Apple',  m:57, t:19, d:10, c:3,r:2,cs:1,rs:1, w:'12h ago'},
-      {id:'B4', name:'Block B4', crop:'Apple',  m:63, t:18, d:10, c:4,r:2,cs:1,rs:2, w:'8h ago'},
-      {id:'C1', name:'Block C1', crop:'Cherry', m:27, t:22, d:8,  c:2,r:3,cs:1,rs:1, w:'2d ago'},
-      {id:'C2', name:'Block C2', crop:'Cherry', m:48, t:20, d:8,  c:3,r:3,cs:1,rs:1, w:'18h ago'},
-      {id:'D1', name:'Block D1', crop:'Apple',  m:60, t:17, d:12, c:1,r:4,cs:2,rs:1, w:'10h ago'},
-      {id:'D2', name:'Block D2', crop:'Apple',  m:54, t:17, d:12, c:3,r:4,cs:2,rs:1, w:'14h ago'},
-      {id:'E1', name:'Block E1', crop:'Cherry', m:39, t:21, d:8,  c:1,r:5,cs:2,rs:1, w:'1d ago'},
-      {id:'E2', name:'Block E2', crop:'Apple',  m:null,t:null,d:null,c:3,r:5,cs:2,rs:1,w:'—'},
-    ]
-  },
-  {
-    id:1, name:'North Ridge', icon:'🌳', sub:'3.2 km away · 28 acres',
-    zones:[
-      {id:'NR-A',name:'Ridge A', crop:'Apple',  m:71, t:16,d:12,c:1,r:1,cs:2,rs:1,w:'8h ago'},
-      {id:'NR-B',name:'Ridge B', crop:'Apple',  m:65, t:15,d:12,c:3,r:1,cs:2,rs:1,w:'10h ago'},
-      {id:'NR-C',name:'Ridge C', crop:'Cherry', m:34, t:19,d:8, c:1,r:2,cs:1,rs:2,w:'1d ago'},
-      {id:'NR-D',name:'Ridge D', crop:'Apple',  m:58, t:17,d:10,c:2,r:2,cs:2,rs:1,w:'14h ago'},
-      {id:'NR-E',name:'Ridge E', crop:'Apple',  m:null,t:null,d:null,c:4,r:2,cs:1,rs:2,w:'—'},
-      {id:'NR-F',name:'Ridge F', crop:'Cherry', m:53, t:18,d:8, c:2,r:3,cs:2,rs:1,w:'6h ago'},
-      {id:'NR-G',name:'Upper G', crop:'Cherry', m:45, t:18,d:8, c:1,r:4,cs:2,rs:1,w:'22h ago'},
-      {id:'NR-H',name:'Upper H', crop:'Apple',  m:69, t:16,d:12,c:3,r:4,cs:2,rs:1,w:'5h ago'},
-    ]
-  },
-  {
-    id:2, name:'Valley Flats', icon:'🍒', sub:'5.1 km away · 22 acres',
-    zones:[
-      {id:'VF-A',name:'Flat A',  crop:'Cherry',m:76,t:20,d:8, c:1,r:1,cs:2,rs:1,w:'4h ago'},
-      {id:'VF-B',name:'Flat B',  crop:'Cherry',m:69,t:20,d:8, c:3,r:1,cs:2,rs:1,w:'5h ago'},
-      {id:'VF-C',name:'Flat C',  crop:'Apple', m:61,t:18,d:12,c:1,r:2,cs:1,rs:2,w:'7h ago'},
-      {id:'VF-D',name:'Flat D',  crop:'Cherry',m:73,t:19,d:8, c:2,r:2,cs:1,rs:1,w:'3h ago'},
-      {id:'VF-E',name:'Flat E',  crop:'Cherry',m:58,t:20,d:8, c:3,r:2,cs:2,rs:1,w:'9h ago'},
-      {id:'VF-F',name:'Flat F',  crop:'Apple', m:55,t:18,d:12,c:2,r:3,cs:1,rs:1,w:'11h ago'},
-      {id:'VF-G',name:'South G', crop:'Apple', m:64,t:17,d:12,c:3,r:3,cs:1,rs:1,w:'8h ago'},
-      {id:'VF-H',name:'South H', crop:'Apple', m:70,t:17,d:12,c:4,r:3,cs:1,rs:1,w:'6h ago'},
-    ]
-  }
+function kml(arr){return arr.map(function(c){return[c[1],c[0]];})}
+
+var HOME_ZONES=[
+  {id:'A',name:'Block A',crop:'Cherry',m:24,t:21,d:8,w:'2d ago',coords:kml([[-119.6658919,49.5990945],[-119.6659402,49.5985034],[-119.664937,49.5984722],[-119.6649317,49.5986043],[-119.6652267,49.5988407],[-119.6655003,49.5990354],[-119.6658919,49.5990945]])},
+  {id:'B',name:'Block B',crop:'Cherry',m:42,t:20,d:8,w:'1d ago',coords:kml([[-119.6659402,49.5985034],[-119.6659724,49.597888],[-119.6654466,49.5977698],[-119.6654413,49.5984756],[-119.6659402,49.5985034]])},
+  {id:'C',name:'Block C',crop:'Apple',m:68,t:18,d:12,w:'6h ago',coords:kml([[-119.6654413,49.5984756],[-119.6654091,49.5977559],[-119.6650068,49.5977003],[-119.6649746,49.5976307],[-119.6646313,49.5976307],[-119.6646581,49.5983644],[-119.6649692,49.5983678],[-119.664937,49.5984722],[-119.6654413,49.5984756]])},
+  {id:'D',name:'Block D',crop:'Apple',m:72,t:17,d:12,w:'6h ago',coords:kml([[-119.6646366,49.5984826],[-119.6646313,49.5976307],[-119.6640358,49.5976064],[-119.6640304,49.5984722],[-119.6646366,49.5984826]])},
+  {id:'E',name:'Block E',crop:'Apple',m:57,t:19,d:10,w:'12h ago',coords:kml([[-119.6640304,49.5984722],[-119.6640358,49.5976064],[-119.6635155,49.597596],[-119.6634833,49.5984652],[-119.6640304,49.5984722]])},
+  {id:'F',name:'Block F',crop:'Cherry',m:27,t:22,d:8,w:'2d ago',coords:kml([[-119.6636572,49.5996305],[-119.6637269,49.5985005],[-119.6634641,49.5985005],[-119.6633997,49.599561],[-119.6636572,49.5996305]])},
+  {id:'G',name:'Block G',crop:'Cherry',m:48,t:20,d:8,w:'18h ago',coords:kml([[-119.6636572,49.5996305],[-119.6638664,49.5997278],[-119.6639468,49.5997105],[-119.6640112,49.5984936],[-119.6637269,49.5985005],[-119.6636572,49.5996305]])},
+  {id:'H',name:'Block H',crop:'Apple',m:63,t:18,d:10,w:'8h ago',coords:kml([[-119.6639468,49.5997105],[-119.6642365,49.5997063],[-119.6642741,49.5985068],[-119.6640304,49.5984722],[-119.6639468,49.5997105]])},
+  {id:'I',name:'Block I',crop:'Apple',m:60,t:17,d:12,w:'10h ago',coords:kml([[-119.6644779,49.5985207],[-119.6642741,49.5985068],[-119.6642741,49.599602],[-119.6644404,49.5995707],[-119.6644779,49.5985207]])},
+  {id:'J',name:'Block J',crop:'Apple',m:54,t:17,d:12,w:'14h ago',coords:kml([[-119.6644779,49.5985207],[-119.6644833,49.5995081],[-119.6646335,49.5994803],[-119.6646281,49.5985276],[-119.6644779,49.5985207]])},
+  {id:'K',name:'Block K',crop:'Cherry',m:39,t:21,d:8,w:'1d ago',coords:kml([[-119.664671,49.599442],[-119.6649071,49.5993621],[-119.6649339,49.5986841],[-119.6646366,49.5984826],[-119.664671,49.599442]])}
 ];
 
-/* ─── STATE & HELPERS ────────────────────────────────── */
-let CF=0, SEL=null;
+var FARMS=[
+  {id:0,name:'Home Farm',icon:'🏡',sub:'Gateway · 11 blocks',lat:49.598422,lng:-119.664789,zones:HOME_ZONES},
+  {id:1,name:'Jones Flat',icon:'🌳',sub:'~2.5 km NW · no blocks yet',lat:49.613047,lng:-119.688687,zones:[]},
+  {id:2,name:'Dump Road',icon:'🍒',sub:'~3.5 km W · no blocks yet',lat:49.593296,lng:-119.696523,zones:[]}
+];
 
-function stat(m){ if(m===null)return'off'; if(m>=50)return'ok'; if(m>=30)return'warn'; return'crit'; }
-
-const COLORS = {
-  ok:   { text:'#3d7a52', bg:'#edf5f0', ring:'#b2d9c0', bar:'#a8d4b5', chart:'#7ab86a' },
-  warn: { text:'#b86e1a', bg:'#fef4e8', ring:'#f0c98a', bar:'#f8c880', chart:'#d4922a' },
-  crit: { text:'#b83232', bg:'#fdecea', ring:'#f0a8a0', bar:'#f4a898', chart:'#d45a4a' },
-  off:  { text:'#9a9590', bg:'#f2f0ec', ring:'#d4d0c8', bar:'#e0dbd2', chart:'#c4c0b8' },
+var CF=0,SEL=null;
+var COLORS={
+  ok:{text:'#3d7a52',bg:'#edf5f0',ring:'#b2d9c0',bar:'#a8d4b5',fill:'rgba(144,204,163,0.5)',stroke:'#3d7a52'},
+  warn:{text:'#b86e1a',bg:'#fef4e8',ring:'#f0c98a',bar:'#f8c880',fill:'rgba(240,185,100,0.5)',stroke:'#b86e1a'},
+  crit:{text:'#b83232',bg:'#fdecea',ring:'#f0a8a0',bar:'#f4a898',fill:'rgba(230,120,110,0.55)',stroke:'#b83232'},
+  off:{text:'#9a9590',bg:'#f2f0ec',ring:'#d4d0c8',bar:'#e0dbd2',fill:'rgba(210,205,196,0.45)',stroke:'#9a9590'}
 };
 
-function stLabel(s){ return{ok:'Healthy',warn:'Monitor',crit:'Water Now',off:'Offline'}[s]; }
-function pillClass(s){ return{ok:'pill-ok',warn:'pill-warn',crit:'pill-crit',off:'pill-off'}[s]; }
-function btnClass(s){ return{ok:'btn-ok',warn:'btn-warn',crit:'btn-crit',off:'btn-off'}[s]; }
-function barClass(s){ return{ok:'bar-ok',warn:'bar-warn',crit:'bar-crit',off:'bar-off'}[s]; }
+function stat(m){if(m===null)return'off';if(m>=50)return'ok';if(m>=30)return'warn';return'crit';}
+function stLabel(s){return{ok:'Healthy',warn:'Monitor',crit:'Water Now',off:'No Sensor'}[s];}
+function mkHist(m){var a=[],v=m||50;for(var i=0;i<7;i++){v=Math.max(12,Math.min(92,v+(Math.random()-.48)*7));a.push(Math.round(v));}a[6]=m||50;return a;}
 
-function mkHistory(m){
-  const a=[]; let v=m??50;
-  for(let i=0;i<7;i++){v=Math.max(12,Math.min(92,v+(Math.random()-.48)*7)); a.push(Math.round(v));}
-  a[6]=m??50; return a;
+var MAP,layerSat,layerStreet,zoneLayers=[],farmMarkers=[];
+
+function initMap(){
+  MAP=L.map('leaflet-map',{center:[49.598422,-119.664789],zoom:16,zoomControl:false,attributionControl:true});
+  MAP.attributionControl.setPrefix('');
+  layerSat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:20,attribution:'© ESRI'});
+  layerStreet=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OSM'});
+  layerSat.addTo(MAP);
+  renderMapZones();
+  renderFarmMarkers();
 }
 
-/* ─── DRAWER ─────────────────────────────────────────── */
-function openDrawer(){ document.getElementById('drawer').classList.add('open'); document.getElementById('overlay').classList.add('open'); }
-function closeDrawer(){ document.getElementById('drawer').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+function setLayer(type){
+  if(type==='sat'){
+    if(MAP.hasLayer(layerStreet))MAP.removeLayer(layerStreet);
+    layerSat.addTo(MAP);
+    document.getElementById('btn-sat').classList.add('active-layer');
+    document.getElementById('btn-street').classList.remove('active-layer');
+  }else{
+    if(MAP.hasLayer(layerSat))MAP.removeLayer(layerSat);
+    layerStreet.addTo(MAP);
+    document.getElementById('btn-street').classList.add('active-layer');
+    document.getElementById('btn-sat').classList.remove('active-layer');
+  }
+  zoneLayers.forEach(function(l){l.bringToFront();});
+}
+
+function renderMapZones(){
+  zoneLayers.forEach(function(l){MAP.removeLayer(l);});
+  zoneLayers=[];
+  var farm=FARMS[CF];
+  if(!farm.zones.length)return;
+  farm.zones.forEach(function(z){
+    var s=stat(z.m),C=COLORS[s];
+    var poly=L.polygon(z.coords,{
+      fillColor:C.fill,fillOpacity:1,
+      color:SEL===z.id?'#1a1a18':C.stroke,
+      weight:SEL===z.id?3:2,
+      opacity:0.9,
+      dashArray:s==='off'?'5,4':null
+    });
+    var pct=z.m!==null?z.m+'%':'—';
+    poly.bindPopup(
+      '<div class="map-popup"><div class="mp-name">'+z.name+'</div>'+
+      '<div class="mp-row"><span class="mp-stat">'+z.crop+' · '+(z.d?z.d+'cm':'no sensor')+' · Watered '+z.w+'</span>'+
+      '<span class="mp-pill" style="background:'+C.bg+';color:'+C.text+';border:1px solid '+C.ring+'">'+pct+' · '+stLabel(s)+'</span></div></div>',
+      {maxWidth:280,closeButton:false}
+    );
+    poly.on('click',function(){tapZ(z.id);});
+    poly.addTo(MAP);
+    zoneLayers.push(poly);
+  });
+  if(CF===0){
+    var all=farm.zones.reduce(function(a,z){return a.concat(z.coords);},[]);
+    MAP.fitBounds(L.latLngBounds(all),{padding:[20,20]});
+  }
+}
+
+function renderFarmMarkers(){
+  farmMarkers.forEach(function(m){MAP.removeLayer(m);});
+  farmMarkers=[];
+  FARMS.forEach(function(f,i){
+    var isCur=i===CF;
+    var icon=L.divIcon({
+      className:'farm-marker-icon',
+      html:'<div class="farm-pin'+(isCur?' current':'')+'">'+f.icon+' '+f.name+'</div>',
+      iconAnchor:[0,0]
+    });
+    var m=L.marker([f.lat,f.lng],{icon:icon,zIndexOffset:isCur?1000:0});
+    m.on('click',function(){selectFarm(i);});
+    m.addTo(MAP);
+    farmMarkers.push(m);
+  });
+}
+
+function flyToFarm(id){
+  var f=FARMS[id];
+  if(id===0&&f.zones.length){
+    var all=f.zones.reduce(function(a,z){return a.concat(z.coords);},[]);
+    MAP.flyToBounds(L.latLngBounds(all),{padding:[24,24],duration:1.2});
+  }else{
+    MAP.flyTo([f.lat,f.lng],15,{duration:1.2});
+  }
+}
+
+function openDrawer(){document.getElementById('drawer').classList.add('open');document.getElementById('overlay').classList.add('open');}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');document.getElementById('overlay').classList.remove('open');}
 
 function selectFarm(id){
-  CF=id; SEL=null;
-  document.querySelectorAll('.farm-item').forEach((el,i)=>el.classList.toggle('active',i===id));
-  const f=FARMS[id];
+  CF=id;SEL=null;
+  document.querySelectorAll('.farm-item').forEach(function(el,i){el.classList.toggle('active',i===id);});
+  var f=FARMS[id];
   document.getElementById('tb-fname').textContent=f.name;
   document.getElementById('tb-fsub').textContent=f.sub;
-  document.getElementById('map-title').textContent=f.name+' — Orchard Map';
   closeDrawer();
-  renderAll(); updateBadges();
+  renderAll();updateBadges();
+  flyToFarm(id);
+  renderFarmMarkers();
 }
 
 function updateBadges(){
-  FARMS.forEach((f,i)=>{
-    const cr=f.zones.filter(z=>stat(z.m)==='crit').length;
-    const wa=f.zones.filter(z=>stat(z.m)==='warn').length;
-    const b=document.getElementById('fib-'+i);
-    if(cr>0){ b.textContent=cr+' alert'+(cr>1?'s':''); b.className='fi-badge fb-crit'; }
-    else if(wa>0){ b.textContent=wa+' watch'; b.className='fi-badge fb-warn'; }
-    else{ b.textContent='All good'; b.className='fi-badge fb-ok'; }
+  FARMS.forEach(function(f,i){
+    var b=document.getElementById('fib-'+i);
+    if(!f.zones.length){b.textContent='No sensors';b.className='fi-badge fb-ok';return;}
+    var cr=f.zones.filter(function(z){return stat(z.m)==='crit';}).length;
+    var wa=f.zones.filter(function(z){return stat(z.m)==='warn';}).length;
+    if(cr>0){b.textContent=cr+' alert'+(cr>1?'s':'');b.className='fi-badge fb-crit';}
+    else if(wa>0){b.textContent=wa+' watch';b.className='fi-badge fb-warn';}
+    else{b.textContent='All good';b.className='fi-badge fb-ok';}
   });
 }
 
-/* ─── STAT STRIP ─────────────────────────────────────── */
 function renderStrip(){
-  const zz=FARMS[CF].zones;
-  const ct=s=>zz.filter(z=>stat(z.m)===s).length;
-  const vm=zz.filter(z=>z.m!==null);
-  const avg=vm.length?Math.round(vm.reduce((s,z)=>s+z.m,0)/vm.length):'—';
-  const off=ct('off');
-
-  document.getElementById('strip').innerHTML=`
-    <div class="stat-chip sc-ok" role="status" aria-label="${ct('ok')} healthy zones">
-      <div class="sc-dot" style="background:var(--ok)"></div>
-      <span class="sc-label">Good</span><span class="sc-val">${ct('ok')}</span>
-    </div>
-    <div class="stat-chip sc-warn" role="status" aria-label="${ct('warn')} zones to watch">
-      <div class="sc-dot" style="background:var(--warn)"></div>
-      <span class="sc-label">Watch</span><span class="sc-val">${ct('warn')}</span>
-    </div>
-    <div class="stat-chip sc-crit" role="status" aria-label="${ct('crit')} critical zones">
-      <div class="sc-dot" style="background:var(--crit)"></div>
-      <span class="sc-label">Critical</span><span class="sc-val">${ct('crit')}</span>
-    </div>
-    ${off?`<div class="stat-chip sc-off"><div class="sc-dot" style="background:var(--off)"></div><span class="sc-label">Offline</span><span class="sc-val">${off}</span></div>`:''}
-    <div class="stat-chip sc-avg">
-      <div class="sc-dot" style="background:var(--sage)"></div>
-      <span class="sc-label">Farm Avg</span><span class="sc-val">${avg}%</span>
-    </div>
-  `;
+  var zz=FARMS[CF].zones;
+  if(!zz.length){document.getElementById('strip').innerHTML='<div class="stat-chip sc-avg"><div class="sc-dot" style="background:var(--t4)"></div><span class="sc-lbl">No sensors mapped yet for this farm</span></div>';return;}
+  var ok=zz.filter(function(z){return stat(z.m)==='ok';}).length;
+  var wa=zz.filter(function(z){return stat(z.m)==='warn';}).length;
+  var cr=zz.filter(function(z){return stat(z.m)==='crit';}).length;
+  var vm=zz.filter(function(z){return z.m!==null;});
+  var avg=vm.length?Math.round(vm.reduce(function(s,z){return s+z.m;},0)/vm.length)+'%':'—';
+  document.getElementById('strip').innerHTML=
+    '<div class="stat-chip sc-ok"><div class="sc-dot" style="background:var(--ok)"></div><span class="sc-lbl">Good</span><span class="sc-val">'+ok+'</span></div>'+
+    '<div class="stat-chip sc-w"><div class="sc-dot" style="background:var(--warn)"></div><span class="sc-lbl">Watch</span><span class="sc-val">'+wa+'</span></div>'+
+    '<div class="stat-chip sc-cr"><div class="sc-dot" style="background:var(--crit)"></div><span class="sc-lbl">Critical</span><span class="sc-val">'+cr+'</span></div>'+
+    '<div class="stat-chip sc-avg"><div class="sc-dot" style="background:var(--sage)"></div><span class="sc-lbl">Farm Avg</span><span class="sc-val">'+avg+'</span></div>';
 }
 
-/* ─── ALERTS ─────────────────────────────────────────── */
 function renderAlerts(){
-  const crits=FARMS[CF].zones.filter(z=>stat(z.m)==='crit');
-  document.getElementById('alert-area').innerHTML=crits.map(z=>`
-    <div class="alert-card" onclick="tapZ('${z.id}')" role="alert" aria-label="${z.name} critically dry at ${z.m}%">
-      <div class="ac-icon-wrap">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L12 14"/><path d="M5 10c0 4 3 8 7 10 4-2 7-6 7-10"/></svg>
-      </div>
-      <div class="ac-body">
-        <div class="ac-title">${z.name} — ${z.m}% moisture</div>
-        <div class="ac-sub">${z.crop} block · Last watered ${z.w}</div>
-      </div>
-      <div class="ac-arr" aria-hidden="true">›</div>
-    </div>
-  `).join('');
-}
-
-/* ─── MAP ────────────────────────────────────────────── */
-function renderMap(){
-  const grid=document.getElementById('map-grid');
-  grid.innerHTML='';
-  FARMS[CF].zones.forEach(z=>{
-    const s=stat(z.m);
-    const el=document.createElement('div');
-    el.className=`zc s-${s}${z.cs===2?' sp2':''}${SEL===z.id?' sel':''}`;
-    el.style.gridColumn=`${z.c}/span ${z.cs}`;
-    el.style.gridRow=`${z.r}/span ${z.rs}`;
-    el.setAttribute('role','button');
-    el.setAttribute('aria-label',`${z.name}: ${z.m!==null?z.m+'% moisture':z.crop+' sensor offline'}. Status: ${stLabel(s)}`);
-    el.innerHTML=`
-      <div class="zc-pct">${z.m!==null?z.m+'%':'—'}</div>
-      <div class="zc-name">${z.name}</div>
-      <div class="zc-badge" aria-hidden="true">${z.crop==='Cherry'?'🍒':'🍎'}</div>
-    `;
-    el.onclick=()=>tapZ(z.id);
-    grid.appendChild(el);
-  });
-}
-
-function tapZ(id){ SEL=SEL===id?null:id; renderMap(); renderDetail(); }
-
-/* ─── DETAIL ─────────────────────────────────────────── */
-function renderDetail(){
-  const panel=document.getElementById('detail-area');
-  if(!SEL){ panel.innerHTML=''; return; }
-  const z=FARMS[CF].zones.find(z=>z.id===SEL);
-  if(!z){ panel.innerHTML=''; return; }
-
-  const s=stat(z.m);
-  const C=COLORS[s];
-  const hist=mkHistory(z.m);
-  const mx=Math.max(...hist,1);
-
-  const bars=hist.map((v,i)=>{
-    const h=Math.round((v/mx)*100);
-    const sc=COLORS[stat(v)];
-    const op=0.4+(i/6)*0.6;
-    return`<div class="sp-bar" style="height:${h}%;background:${sc.bar};opacity:${op}" aria-hidden="true"></div>`;
+  var crits=FARMS[CF].zones.filter(function(z){return stat(z.m)==='crit';});
+  document.getElementById('alert-area').innerHTML=crits.map(function(z){
+    return '<div class="alert-card" onclick="tapZ(\''+z.id+'\')">'+
+      '<div class="ac-icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 2L12 14"/><path d="M5 10c0 4 3 8 7 10 4-2 7-6 7-10"/></svg></div>'+
+      '<div class="ac-body"><div class="ac-title">'+z.name+' — '+z.m+'% moisture</div><div class="ac-sub">'+z.crop+' · Last watered '+z.w+'</div></div>'+
+      '<div class="ac-arr">›</div></div>';
   }).join('');
+}
 
-  const actions={
-    crit:'💧 Schedule Irrigation Now',
-    warn:'⚠️ Schedule Irrigation Soon',
-    off: '🔧 Check Sensor Connection',
-    ok:  '✓ Zone is Healthy'
-  };
+function tapZ(id){
+  SEL=SEL===id?null:id;
+  renderMapZones();
+  renderDetail();
+  if(SEL){
+    var z=FARMS[CF].zones.find(function(z){return z.id===SEL;});
+    if(z)MAP.flyToBounds(L.latLngBounds(z.coords),{padding:[32,32],maxZoom:18,duration:.8});
+  }
+}
 
-  panel.innerHTML=`
-    <div class="detail-card" role="region" aria-label="${z.name} detail">
-      <div class="detail-card-bar ${barClass(s)}" aria-hidden="true"></div>
-      <div class="detail-inner">
-        <div class="detail-top">
-          <div>
-            <div class="detail-name">${z.name}</div>
-            <div class="detail-crop">${z.crop} · ${z.d?z.d+'cm sensor depth':'No sensor'}</div>
-          </div>
-          <div class="status-pill ${pillClass(s)}" role="status">${stLabel(s)}</div>
-        </div>
-        <div class="metrics">
-          <div class="metric">
-            <div class="metric-val" style="color:${C.text}">${z.m!==null?z.m+'%':'—'}</div>
-            <div class="metric-label">Moisture</div>
-          </div>
-          <div class="metric">
-            <div class="metric-val">${z.t!==null?z.t+'°C':'—'}</div>
-            <div class="metric-label">Soil Temp</div>
-          </div>
-          <div class="metric">
-            <div class="metric-val" style="font-size:${z.w.length>5?'14px':'22px'};padding-top:${z.w.length>5?'6px':'0'}">${z.w}</div>
-            <div class="metric-label">Last Water</div>
-          </div>
-        </div>
-        <div class="spark-wrap">
-          <div class="t-label" style="margin-bottom:8px">7-day history</div>
-          <div class="spark" role="img" aria-label="7-day moisture history chart">${bars}</div>
-          <div class="spark-ticks"><span>6d</span><span>5d</span><span>4d</span><span>3d</span><span>2d</span><span>1d</span><span>Now</span></div>
-        </div>
-        <div class="detail-divider" aria-hidden="true"></div>
-        <button class="action-btn ${btnClass(s)}" onclick="doAction('${z.id}')" aria-label="${actions[s]} for ${z.name}">
-          ${actions[s]}
-        </button>
-      </div>
-    </div>
-  `;
+function renderDetail(){
+  var panel=document.getElementById('detail-area');
+  if(!SEL){panel.innerHTML='';return;}
+  var z=FARMS[CF].zones.find(function(zz){return zz.id===SEL;});
+  if(!z){panel.innerHTML='';return;}
+  var s=stat(z.m),C=COLORS[s];
+  var hist=mkHist(z.m),mx=Math.max.apply(null,hist.concat([1]));
+  var bars=hist.map(function(v,i){
+    var h=Math.round((v/mx)*100),op=0.4+(i/6)*0.6;
+    return '<div class="sp-bar" style="height:'+h+'%;background:'+COLORS[stat(v)].bar+';opacity:'+op+'"></div>';
+  }).join('');
+  var bbar={ok:'bar-ok',warn:'bar-warn',crit:'bar-crit',off:'bar-off'}[s];
+  var ppill={ok:'pill-ok',warn:'pill-warn',crit:'pill-crit',off:'pill-off'}[s];
+  var abtn={ok:'btn-ok',warn:'btn-warn',crit:'btn-crit',off:'btn-off'}[s];
+  var albl={crit:'💧 Schedule Irrigation Now',warn:'⚠️ Schedule Irrigation Soon',off:'🔧 Check Sensor',ok:'✓ Zone is Healthy'}[s];
+  panel.innerHTML=
+    '<div class="detail-card">'+
+    '<div class="dcbar '+bbar+'"></div>'+
+    '<div class="detail-inner">'+
+    '<div class="detail-top"><div><div class="detail-name">'+z.name+'</div><div class="detail-crop">'+z.crop+' · '+(z.d?z.d+'cm depth':'No sensor')+'</div></div>'+
+    '<div class="spill '+ppill+'">'+stLabel(s)+'</div></div>'+
+    '<div class="metrics">'+
+    '<div class="metric"><div class="metric-val" style="color:'+C.text+'">'+(z.m!==null?z.m+'%':'—')+'</div><div class="metric-label">Moisture</div></div>'+
+    '<div class="metric"><div class="metric-val">'+(z.t!==null?z.t+'°C':'—')+'</div><div class="metric-label">Soil Temp</div></div>'+
+    '<div class="metric"><div class="metric-val" style="font-size:'+(z.w.length>5?'14px':'22px')+';padding-top:'+(z.w.length>5?'5px':'0')+'">'+z.w+'</div><div class="metric-label">Last Water</div></div>'+
+    '</div>'+
+    '<div class="spark-wrap"><div style="font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);margin-bottom:8px">7-day history</div>'+
+    '<div class="spark">'+bars+'</div>'+
+    '<div class="spark-ticks"><span>6d</span><span>5d</span><span>4d</span><span>3d</span><span>2d</span><span>1d</span><span>Now</span></div></div>'+
+    '<div style="height:1px;background:var(--stone);margin:0 0 14px"></div>'+
+    '<button class="action-btn '+abtn+'" onclick="doAction(\''+z.id+'\')">'+albl+'</button>'+
+    '</div></div>';
 }
 
 function doAction(id){
-  const z=FARMS[CF].zones.find(z=>z.id===id);
-  const s=stat(z.m);
-  const msgs={
-    crit:`Irrigation reminder set for ${z.name}.\nRecommended: 45 min at medium flow.`,
-    warn:`Irrigation scheduled for ${z.name} — tomorrow morning.`,
-    off: `Sensor check queued for ${z.name}. You'll be notified when it reconnects.`,
-    ok:  `${z.name} is healthy. No action needed right now.`
-  };
+  var z=FARMS[CF].zones.find(function(zz){return zz.id===id;});
+  var s=stat(z.m);
+  var msgs={crit:'Irrigation reminder set for '+z.name+'.\nRecommended: 45 min at medium flow.',warn:'Irrigation scheduled for '+z.name+' — tomorrow morning.',off:'Sensor check queued for '+z.name+'.',ok:z.name+' is healthy. No action needed.'};
   alert(msgs[s]);
 }
 
-/* ─── ZONES LIST ─────────────────────────────────────── */
 function renderZonesList(){
-  const sorted=[...FARMS[CF].zones].sort((a,b)=>(a.m??999)-(b.m??999));
-  document.getElementById('zones-list').innerHTML=sorted.map(z=>{
-    const s=stat(z.m); const C=COLORS[s];
-    return`
-      <div class="zone-row" onclick="goZ('${z.id}')" role="button" aria-label="${z.name}: ${z.m!==null?z.m+'%':'offline'}. ${stLabel(s)}">
-        <div class="zr-stripe" style="background:${C.bar}" aria-hidden="true"></div>
-        <div class="zr-info">
-          <div class="zr-name">${z.name}</div>
-          <div class="zr-meta">${z.crop} · ${z.d?z.d+'cm':'No sensor'} · Watered ${z.w}</div>
-        </div>
-        <div class="zr-right">
-          <div class="zr-pct" style="color:${C.text}">${z.m!==null?z.m+'%':'—'}</div>
-          <div class="zr-status" style="color:${C.text}">${stLabel(s)}</div>
-        </div>
-      </div>
-    `;
+  var zz=FARMS[CF].zones;
+  if(!zz.length){document.getElementById('zones-list').innerHTML='<div class="empty-state">No blocks mapped yet for this farm.<br>Trace zones in Google My Maps and share the KML file.</div>';return;}
+  var sorted=zz.slice().sort(function(a,b){return(a.m||999)-(b.m||999);});
+  document.getElementById('zones-list').innerHTML=sorted.map(function(z){
+    var s=stat(z.m),C=COLORS[s];
+    return '<div class="zone-row" onclick="goZ(\''+z.id+'\')">'+
+      '<div class="zr-stripe" style="background:'+C.bar+'"></div>'+
+      '<div class="zr-info"><div class="zr-name">'+z.name+'</div><div class="zr-meta">'+z.crop+' · '+(z.d?z.d+'cm':'No sensor')+' · Watered '+z.w+'</div></div>'+
+      '<div class="zr-right"><div class="zr-pct" style="color:'+C.text+'">'+(z.m!==null?z.m+'%':'—')+'</div><div class="zr-status" style="color:'+C.text+'">'+stLabel(s)+'</div></div>'+
+      '</div>';
   }).join('');
 }
 
 function goZ(id){
-  SEL=id; switchTab('map'); renderMap(); renderDetail();
-  setTimeout(()=>document.getElementById('detail-area')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+  SEL=id;switchTab('map');renderMapZones();renderDetail();
+  var z=FARMS[CF].zones.find(function(zz){return zz.id===id;});
+  if(z)MAP.flyToBounds(L.latLngBounds(z.coords),{padding:[32,32],maxZoom:18,duration:.8});
+  setTimeout(function(){var d=document.getElementById('detail-area');if(d)d.scrollIntoView({behavior:'smooth',block:'start'});},500);
 }
 
-/* ─── HISTORY ────────────────────────────────────────── */
 function renderHistory(){
-  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Today'];
-  const zz=FARMS[CF].zones;
-  const az=zz.filter(z=>z.crop==='Apple'&&z.m!==null);
-  const cz=zz.filter(z=>z.crop==='Cherry'&&z.m!==null);
-
-  document.getElementById('bc').innerHTML=days.map((_,i)=>{
-    const a=az.length?Math.round(az.reduce((s,z)=>s+mkHistory(z.m)[i],0)/az.length):0;
-    const c=cz.length?Math.round(cz.reduce((s,z)=>s+mkHistory(z.m)[i],0)/cz.length):0;
-    return`<div class="bc-grp">
-      <div class="bc-bar" style="height:${a}%;background:#a8d4b5"></div>
-      <div class="bc-bar" style="height:${c}%;background:#f8c880"></div>
-    </div>`;
+  var days=['Mon','Tue','Wed','Thu','Fri','Sat','Today'];
+  var zz=FARMS[CF].zones;
+  var az=zz.filter(function(z){return z.crop==='Apple'&&z.m!==null;});
+  var cz=zz.filter(function(z){return z.crop==='Cherry'&&z.m!==null;});
+  document.getElementById('bc').innerHTML=days.map(function(_,i){
+    var a=az.length?Math.round(az.reduce(function(s,z){return s+mkHist(z.m)[i];},0)/az.length):0;
+    var c=cz.length?Math.round(cz.reduce(function(s,z){return s+mkHist(z.m)[i];},0)/cz.length):0;
+    return '<div class="bc-grp"><div class="bc-bar" style="height:'+a+'%;background:#a8d4b5"></div><div class="bc-bar" style="height:'+c+'%;background:#f8c880"></div></div>';
   }).join('');
-
-  document.getElementById('bc-lbls').innerHTML=days.map(d=>`<span>${d}</span>`).join('');
-
-  const evs=[
-    {c:COLORS.crit.bar,  n:'Block B1', d:'Mon — Dropped below 30%, water needed'},
-    {c:COLORS.crit.bar,  n:'Block C1', d:'Tue — Critically dry, irrigation alert sent'},
-    {c:COLORS.ok.bar,    n:'Block B1', d:'Wed — Irrigated, recovered to 58%'},
-    {c:COLORS.off.bar,   n:'Block E2', d:'Thu — Sensor went offline'},
-    {c:COLORS.warn.bar,  n:'Block E1', d:'Sat — Dropping, monitor recommended'},
+  document.getElementById('bc-lbls').innerHTML=days.map(function(d){return'<span>'+d+'</span>';}).join('');
+  var evs=[
+    {c:COLORS.crit.bar,n:'Block A',d:'Mon — Dropped below 30%, water needed'},
+    {c:COLORS.crit.bar,n:'Block F',d:'Tue — Critically dry, irrigation alert sent'},
+    {c:COLORS.ok.bar,n:'Block A',d:'Wed — Irrigated, recovered to 55%'},
+    {c:COLORS.warn.bar,n:'Block K',d:'Sat — Dropping, monitor recommended'}
   ];
-  document.getElementById('ev-log').innerHTML=evs.map(e=>`
-    <div class="ev-row">
-      <div class="ev-pip" style="background:${e.c}" aria-hidden="true"></div>
-      <div><div class="ev-name">${e.n}</div><div class="ev-desc">${e.d}</div></div>
-    </div>
-  `).join('');
+  document.getElementById('ev-log').innerHTML=evs.map(function(e){
+    return '<div class="ev-row"><div class="ev-pip" style="background:'+e.c+'"></div><div><div class="ev-name">'+e.n+'</div><div class="ev-desc">'+e.d+'</div></div></div>';
+  }).join('');
 }
 
-/* ─── TABS ───────────────────────────────────────────── */
 function switchTab(t){
-  ['map','zones','history'].forEach(x=>{
+  ['map','zones','history'].forEach(function(x){
     document.getElementById('tc-'+x).classList.toggle('active',x===t);
     document.getElementById('tb-'+x).classList.toggle('active',x===t);
   });
   if(t==='zones')renderZonesList();
   if(t==='history')renderHistory();
+  if(t==='map')setTimeout(function(){MAP.invalidateSize();},50);
 }
 
-/* ─── SYNC ───────────────────────────────────────────── */
 function doSync(){
-  const btn=document.getElementById('sync-btn');
+  var btn=document.getElementById('sync-btn');
   btn.classList.add('spin');
-  setTimeout(()=>{
+  setTimeout(function(){
     btn.classList.remove('spin');
-    FARMS.forEach(f=>f.zones.forEach(z=>{
-      if(z.m!==null&&Math.random()>.5)
-        z.m=Math.max(14,Math.min(90,z.m+Math.round((Math.random()-.52)*3)));
-    }));
-    renderAll(); updateBadges();
-  },850);
+    FARMS.forEach(function(f){f.zones.forEach(function(z){
+      if(z.m!==null&&Math.random()>.5)z.m=Math.max(14,Math.min(90,z.m+Math.round((Math.random()-.52)*3)));
+    });});
+    renderAll();updateBadges();renderMapZones();
+  },900);
 }
 
-/* ─── INIT ───────────────────────────────────────────── */
-function renderAll(){ renderStrip(); renderAlerts(); renderMap(); renderDetail(); }
-updateBadges(); renderAll();
+function renderAll(){renderStrip();renderAlerts();renderDetail();}
 
-setInterval(()=>{
-  FARMS.forEach(f=>f.zones.forEach(z=>{
-    if(z.m!==null&&Math.random()>.72)
-      z.m=Math.max(14,Math.min(90,z.m+Math.round((Math.random()-.52)*2)));
-  }));
-  renderAll(); updateBadges();
-},14000);
+document.addEventListener('DOMContentLoaded',function(){
+  initMap();updateBadges();renderAll();
+});
+
+setInterval(function(){
+  FARMS.forEach(function(f){f.zones.forEach(function(z){
+    if(z.m!==null&&Math.random()>.75)z.m=Math.max(14,Math.min(90,z.m+Math.round((Math.random()-.52)*2)));
+  });});
+  renderAll();updateBadges();renderMapZones();
+},15000);
 </script>
 </body>
 </html>
