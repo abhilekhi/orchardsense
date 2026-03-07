@@ -8,60 +8,1839 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
   <meta name="apple-mobile-web-app-title" content="OrchardSense"/>
   <meta name="theme-color" content="#166534"/>
-  <meta name="description" content="OrchardSense soil moisture monitoring — BC Okanagan"/>
-  <title>OrchardSense Monitoring</title>
-  <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22OrchardSense%22%2C%22short_name%22%3A%22OrchardSense%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f0f2f0%22%2C%22theme_color%22%3A%22%23166534%22%7D"/>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23166534'/%3E%3Cpath d='M32 52C32 52 16 42 16 28C16 20.27 23.16 14 32 14C40.84 14 48 20.27 48 28C48 42 32 52 32 52Z' fill='%2386efac'/%3E%3Cpath d='M32 52L32 22' stroke='%23166534' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E"/>
+  <title>OrchardSense</title>
+
+  <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <link rel="stylesheet" href="./src/styles/index.css"/>
-  <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      const c = document.createElement('canvas'); c.width = c.height = 180;
-      const x = c.getContext('2d');
-      const g = x.createLinearGradient(0,0,180,180); g.addColorStop(0,'#166534'); g.addColorStop(1,'#14532d');
-      x.fillStyle=g; x.beginPath(); x.moveTo(32,0);x.lineTo(148,0);x.quadraticCurveTo(180,0,180,32);
-      x.lineTo(180,148);x.quadraticCurveTo(180,180,148,180);x.lineTo(32,180);x.quadraticCurveTo(0,180,0,148);
-      x.lineTo(0,32);x.quadraticCurveTo(0,0,32,0);x.fill();
-      x.fillStyle='rgba(0,0,0,.18)';x.beginPath();x.ellipse(90,142,44,11,0,0,Math.PI*2);x.fill();
-      x.fillStyle='#86efac';x.beginPath();x.moveTo(90,152);x.bezierCurveTo(90,152,44,126,44,84);
-      x.bezierCurveTo(44,60,65,42,90,42);x.bezierCurveTo(115,42,136,60,136,84);
-      x.bezierCurveTo(136,126,90,152,90,152);x.fill();
-      x.strokeStyle='#166534';x.lineWidth=6;x.lineCap='round';
-      x.beginPath();x.moveTo(90,152);x.lineTo(90,60);x.stroke();
-      x.lineWidth=4;x.beginPath();x.moveTo(90,110);x.bezierCurveTo(80,98,68,88,62,80);x.stroke();
-      x.beginPath();x.moveTo(90,90);x.bezierCurveTo(100,80,112,72,118,66);x.stroke();
-      const l=document.createElement('link');l.rel='apple-touch-icon';l.href=c.toDataURL('image/png');
-      document.head.appendChild(l);
-    });
-  </script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+
+
+
   <style>
-    #loading-screen{position:fixed;inset:0;background:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;font-family:system-ui,sans-serif;transition:opacity .4s;}
-    .spinner{width:40px;height:40px;border:4px solid #e2e8f0;border-top-color:#166534;border-radius:50%;animation:spin .8s linear infinite;margin-bottom:16px;}
-    @keyframes spin{to{transform:rotate(360deg)}}
+/* ─────────────────────────────────────────────
+   index.css  –  Lekhi Farm Monitoring
+   Mobile-first. Bottom tab navigation.
+   Design tokens at the top — change once here.
+───────────────────────────────────────────── */
+
+/* ── Tokens ── */
+:root {
+  --green-900: #14532d;
+  --green-800: #166534;
+  --green-600: #16a34a;
+  --green-400: #4ade80;
+  --green-100: #dcfce7;
+  --green-50:  #f0fdf4;
+
+  --slate-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-700: #334155;
+  --slate-500: #64748b;
+  --slate-400: #94a3b8;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+  --slate-50:  #f8fafc;
+
+  --red-600:    #dc2626;
+  --red-50:     #fff1f2;
+  --amber-600:  #d97706;
+  --amber-50:   #fffbeb;
+  --blue-700:   #1d4ed8;
+  --blue-50:    #eff6ff;
+  --violet-600: #7c3aed;
+  --violet-50:  #f5f3ff;
+
+  --radius-sm:  8px;
+  --radius-md:  14px;
+  --radius-lg:  20px;
+  --radius-xl:  26px;
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.06);
+  --shadow-md:  0 4px 16px rgba(0,0,0,.08);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,.12);
+
+  --nav-height: 68px;  /* bottom tab bar */
+  --header-height: 56px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Reset ── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: -apple-system, 'SF Pro Text', 'Segoe UI', sans-serif;
+  background: #f0f2f0;
+  color: var(--slate-900);
+  height: 100dvh;
+  overflow: hidden;
+}
+button { font-family: inherit; border: none; background: none; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--green-800); outline-offset: 2px; }
+a { color: inherit; text-decoration: none; }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--slate-200); border-radius: 4px; }
+
+/* ── App shell ── */
+#root { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
+
+.app-header {
+  height: var(--header-height);
+  background: white;
+  border-bottom: 1px solid var(--slate-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+  z-index: 30;
+}
+
+.screen {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(var(--nav-height) + var(--safe-bottom) + 16px);
+}
+
+/* ── Bottom tab bar ── */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  height: calc(var(--nav-height) + var(--safe-bottom));
+  background: white;
+  border-top: 1px solid var(--slate-200);
+  display: flex;
+  align-items: flex-start;
+  padding-top: 8px;
+  z-index: 40;
+}
+.tab-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px;
+  cursor: pointer;
+  transition: opacity .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.tab-item:active { opacity: .7; }
+.tab-icon {
+  font-size: 22px;
+  line-height: 1;
+  position: relative;
+}
+.tab-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  color: var(--slate-400);
+  transition: color .15s;
+}
+.tab-item.active .tab-label { color: var(--green-800); }
+.tab-badge {
+  position: absolute;
+  top: -3px; right: -6px;
+  width: 14px; height: 14px;
+  background: var(--red-600);
+  color: white;
+  border-radius: 50%;
+  font-size: 8px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+}
+
+/* ── Farm pill selector ── */
+.farm-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 0 2px;
+}
+.farm-pills::-webkit-scrollbar { display: none; }
+.farm-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 30px;
+  border: 1.5px solid var(--slate-200);
+  background: white;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate-500);
+  transition: all .15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.farm-pill.active {
+  background: var(--green-800);
+  border-color: var(--green-800);
+  color: white;
+}
+.farm-pill-badge {
+  background: rgba(255,255,255,.3);
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 10px;
+}
+
+/* ── Card ── */
+.card {
+  background: white;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--slate-200);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.card-section {
+  padding: 16px;
+}
+.card-divider {
+  height: 1px;
+  background: var(--slate-100);
+}
+
+/* ── Section label ── */
+.section-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--slate-400);
+}
+
+/* ── Briefing ── */
+.briefing-text {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--slate-800);
+  line-height: 1.45;
+}
+.briefing-text .urgent { color: var(--red-600); }
+.briefing-text .ok     { color: var(--green-800); }
+.rain-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f0f7ff;
+  border-radius: var(--radius-md);
+  margin-top: 10px;
+}
+.rain-note-text { font-size: 12px; color: var(--blue-700); line-height: 1.5; font-weight: 500; }
+
+/* ── Dot strip ── */
+.dot-strip {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.dot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s;
+}
+.dot-wrap:active { transform: scale(.92); }
+.dot-circle {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  border: 3px solid white;
+  transition: box-shadow .15s, width .15s, height .15s;
+}
+.dot-pct {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--slate-400);
+}
+
+/* ── Block detail sheet ── */
+.detail-sheet {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: white;
+  border: 1px solid var(--slate-200);
+  border-bottom: none;
+  overflow: hidden;
+  margin-top: 12px;
+  animation: slideup .2s ease;
+}
+@keyframes slideup { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.detail-moisture-big {
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  line-height: 1;
+}
+.moisture-bar-bg {
+  height: 8px;
+  background: var(--slate-100);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.moisture-bar-fill {
+  height: 100%;
+  border-radius: 20px;
+  transition: width .6s cubic-bezier(.34, 1.56, .64, 1);
+}
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+}
+.metric-cell {
+  padding: 12px 14px;
+  border-right: 1px solid var(--slate-100);
+}
+.metric-cell:last-child { border-right: none; }
+.metric-label {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--slate-400);
+  margin-bottom: 4px;
+}
+.metric-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-700);
+}
+.action-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity .15s, transform .1s;
+  border: none;
+}
+.action-btn:active { transform: scale(.98); opacity: .9; }
+
+/* ── GDD / spray timing card ── */
+.stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.spray-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+.spray-alert-text { font-size: 12px; color: var(--amber-600); line-height: 1.5; font-weight: 600; }
+.gdd-progress-bg {
+  height: 6px;
+  background: var(--slate-100);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.gdd-progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--green-600), var(--green-800));
+  transition: width .8s ease;
+}
+
+/* ── Weather signals ── */
+.signals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  background: var(--slate-100);
+}
+.signal-cell {
+  background: white;
+  padding: 14px 14px 12px;
+}
+.signal-icon { font-size: 20px; margin-bottom: 6px; }
+.signal-label {
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--slate-400);
+  margin-bottom: 3px;
+}
+.signal-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--slate-800);
+  letter-spacing: -.5px;
+}
+.signal-sub {
+  font-size: 10px;
+  color: var(--slate-500);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.signal-cell.alert { background: #fff8f8; }
+.signal-cell.alert .signal-value { color: var(--red-600); }
+.signal-cell.warn  { background: #fffdf5; }
+.signal-cell.warn  .signal-value { color: var(--amber-600); }
+.signal-cell.ok    { background: var(--green-50); }
+.signal-cell.ok    .signal-value { color: var(--green-800); }
+
+/* ── Forecast strip ── */
+.forecast-row {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.forecast-row::-webkit-scrollbar { display: none; }
+.forecast-cell {
+  flex: 0 0 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 4px;
+  border-right: 1px solid var(--slate-100);
+}
+.forecast-cell:last-child { border-right: none; }
+.forecast-cell.rain-day  { background: #f0f7ff; }
+.forecast-cell.frost-day { background: var(--violet-50); }
+.fc-day { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: var(--slate-400); }
+.fc-day.rain  { color: var(--blue-700); }
+.fc-day.frost { color: var(--violet-600); }
+.fc-emoji { font-size: 20px; line-height: 1; }
+.fc-high { font-size: 13px; font-weight: 800; color: var(--slate-800); }
+.fc-low  { font-size: 11px; color: var(--slate-400); }
+.fc-low.frost { color: var(--violet-600); font-weight: 700; }
+.fc-tag {
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 6px;
+}
+
+/* ── ET bar ── */
+.et-bar-bg   { height: 5px; background: var(--slate-100); border-radius: 10px; overflow: hidden; }
+.et-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, #fbbf24, #f43f5e); }
+
+/* ── Skeleton ── */
+@keyframes shimmer { 0%,100%{opacity:.4} 50%{opacity:.85} }
+.skeleton { animation: shimmer 1.5s infinite; background: var(--slate-200); border-radius: 6px; display: block; }
+
+/* ── Animations ── */
+@keyframes gw-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.4)} 70%{box-shadow:0 0 0 6px rgba(16,185,129,0)} }
+.gw-pulse { animation: gw-pulse 2.5s infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin .8s linear infinite; }
+@keyframes fadein { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+.fadein { animation: fadein .2s ease; }
+@keyframes alert-blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.alert-blink { animation: alert-blink 2s infinite; }
+
+/* ── Map screen ── */
+.map-screen {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  height: calc(100dvh - var(--header-height) - var(--nav-height) - var(--safe-bottom));
+}
+#leaflet-map { width: 100%; height: 100%; }
+.leaflet-popup-content-wrapper {
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  border: 1.5px solid var(--slate-200);
+  padding: 0;
+  overflow: hidden;
+}
+.leaflet-popup-content { margin: 0; line-height: 1; }
+.leaflet-popup-tip-container { display: none; }
+.map-layer-btns {
+  position: absolute;
+  top: 10px; right: 10px;
+  z-index: 500;
+  display: flex;
+  gap: 5px;
+}
+.map-layer-btn {
+  background: white;
+  border: 1.5px solid var(--slate-200);
+  border-radius: 8px;
+  padding: 6px 11px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--slate-500);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+.map-layer-btn.active { background: var(--green-50); color: var(--green-800); border-color: #bbf7d0; }
+.map-no-blocks-badge {
+  position: absolute;
+  bottom: 20px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  background: white;
+  border-radius: 14px;
+  padding: 12px 20px;
+  border: 1px solid var(--slate-200);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ── Status badge ── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+
+/* ── Utility ── */
+.px-16 { padding-left: 16px; padding-right: 16px; }
+.py-16 { padding-top: 16px; padding-bottom: 16px; }
+.p-16  { padding: 16px; }
+.gap-12 { gap: 12px; }
+.flex  { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 11px; }
+.text-slate { color: var(--slate-500); }
+.font-bold { font-weight: 700; }
+.font-black { font-weight: 800; }
+
+    #loading-screen {
+      position: fixed; inset: 0; background: #f8fafc;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 9999; font-family: system-ui, sans-serif; transition: opacity .4s;
+    }
+    .loader-spinner {
+      width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top-color: #166534;
+      border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 16px;
+    }
   </style>
 </head>
 <body>
-  <div id="loading-screen"><div class="spinner"></div><div style="color:#64748b;font-weight:600;font-size:14px;">OrchardSense</div></div>
+  <div id="loading-screen">
+    <div class="loader-spinner"></div>
+    <div style="color:#64748b;font-weight:600;font-size:14px;">OrchardSense</div>
+  </div>
   <div id="root"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="importmap">
-    {
-      "imports": {
-        "react":            "https://esm.sh/react@18",
-        "react-dom":        "https://esm.sh/react-dom@18",
-        "react-dom/client": "https://esm.sh/react-dom@18/client"
-      }
+
+  <script type="text/babel" data-type="module" data-presets="react">
+    const { useState, useEffect, useCallback, useRef, useMemo } = React;
+
+    // ─── Data ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  farms.js  –  all static farm / zone data
+//  GPS coords from real KML (Home Farm only)
+//  Jones Flat + Dump Road: farm pins, no blocks yet
+// ─────────────────────────────────────────────
+
+function kml(pairs) {
+  // KML is [lng, lat] → Leaflet wants [lat, lng]
+  return pairs.map(([lng, lat]) => [lat, lng]);
+}
+
+const HOME_ZONES = [
+  {
+    id: 'A', name: 'Block A', crop: 'Cherry', depth: 8,
+    moisture: 24, temp: 21, lastRead: '2d ago', status: 'Critical',
+    coords: kml([[-119.6658919,49.5990945],[-119.6659402,49.5985034],[-119.664937,49.5984722],[-119.6649317,49.5986043],[-119.6652267,49.5988407],[-119.6655003,49.5990354],[-119.6658919,49.5990945]]),
+  },
+  {
+    id: 'B', name: 'Block B', crop: 'Cherry', depth: 8,
+    moisture: 42, temp: 20, lastRead: '1d ago', status: 'Action Required',
+    coords: kml([[-119.6659402,49.5985034],[-119.6659724,49.597888],[-119.6654466,49.5977698],[-119.6654413,49.5984756],[-119.6659402,49.5985034]]),
+  },
+  {
+    id: 'C', name: 'Block C', crop: 'Apple', depth: 12,
+    moisture: 68, temp: 18, lastRead: '6h ago', status: 'Optimal',
+    coords: kml([[-119.6654413,49.5984756],[-119.6654091,49.5977559],[-119.6650068,49.5977003],[-119.6649746,49.5976307],[-119.6646313,49.5976307],[-119.6646581,49.5983644],[-119.6649692,49.5983678],[-119.664937,49.5984722],[-119.6654413,49.5984756]]),
+  },
+  {
+    id: 'D', name: 'Block D', crop: 'Apple', depth: 12,
+    moisture: 72, temp: 17, lastRead: '6h ago', status: 'Optimal',
+    coords: kml([[-119.6646366,49.5984826],[-119.6646313,49.5976307],[-119.6640358,49.5976064],[-119.6640304,49.5984722],[-119.6646366,49.5984826]]),
+  },
+  {
+    id: 'E', name: 'Block E', crop: 'Apple', depth: 10,
+    moisture: 57, temp: 19, lastRead: '12h ago', status: 'Optimal',
+    coords: kml([[-119.6640304,49.5984722],[-119.6640358,49.5976064],[-119.6635155,49.597596],[-119.6634833,49.5984652],[-119.6640304,49.5984722]]),
+  },
+  {
+    id: 'F', name: 'Block F', crop: 'Cherry', depth: 8,
+    moisture: 27, temp: 22, lastRead: '2d ago', status: 'Critical',
+    coords: kml([[-119.6636572,49.5996305],[-119.6637269,49.5985005],[-119.6634641,49.5985005],[-119.6633997,49.599561],[-119.6636572,49.5996305]]),
+  },
+  {
+    id: 'G', name: 'Block G', crop: 'Cherry', depth: 8,
+    moisture: 48, temp: 20, lastRead: '18h ago', status: 'Action Required',
+    coords: kml([[-119.6636572,49.5996305],[-119.6638664,49.5997278],[-119.6639468,49.5997105],[-119.6640112,49.5984936],[-119.6637269,49.5985005],[-119.6636572,49.5996305]]),
+  },
+  {
+    id: 'H', name: 'Block H', crop: 'Apple', depth: 10,
+    moisture: 63, temp: 18, lastRead: '8h ago', status: 'Optimal',
+    coords: kml([[-119.6639468,49.5997105],[-119.6642365,49.5997063],[-119.6642741,49.5985068],[-119.6640304,49.5984722],[-119.6639468,49.5997105]]),
+  },
+  {
+    id: 'I', name: 'Block I', crop: 'Apple', depth: 12,
+    moisture: 60, temp: 17, lastRead: '10h ago', status: 'Optimal',
+    coords: kml([[-119.6644779,49.5985207],[-119.6642741,49.5985068],[-119.6642741,49.599602],[-119.6644404,49.5995707],[-119.6644779,49.5985207]]),
+  },
+  {
+    id: 'J', name: 'Block J', crop: 'Apple', depth: 12,
+    moisture: 54, temp: 17, lastRead: '14h ago', status: 'Optimal',
+    coords: kml([[-119.6644779,49.5985207],[-119.6644833,49.5995081],[-119.6646335,49.5994803],[-119.6646281,49.5985276],[-119.6644779,49.5985207]]),
+  },
+  {
+    id: 'K', name: 'Block K', crop: 'Cherry', depth: 8,
+    moisture: 39, temp: 21, lastRead: '1d ago', status: 'Action Required',
+    coords: kml([[-119.664671,49.599442],[-119.6649071,49.5993621],[-119.6649339,49.5986841],[-119.6646366,49.5984826],[-119.664671,49.599442]]),
+  },
+];
+
+const FARMS = [
+  {
+    id: 0,
+    name: 'Home Farm',
+    icon: '🏡',
+    location: 'Summerland, BC',
+    type: 'Cherry & Apple',
+    lat: 49.598422,
+    lng: -119.664789,
+    zones: HOME_ZONES,
+  },
+  {
+    id: 1,
+    name: 'Jones Flat',
+    icon: '🌳',
+    location: '2.5 km NW',
+    type: 'No blocks yet',
+    lat: 49.613047,
+    lng: -119.688687,
+    zones: [],
+  },
+  {
+    id: 2,
+    name: 'Dump Road',
+    icon: '🍎',
+    location: '3.5 km W',
+    type: 'No blocks yet',
+    lat: 49.593296,
+    lng: -119.696523,
+    zones: [],
+  },
+];
+
+// Weather coordinates (Summerland BC)
+const WEATHER_COORDS = { lat: 49.605, lng: -119.673 };
+
+// ── Zone status config ─────────────────────────────────
+const STATUS_CONFIG = {
+  'Critical': {
+    color: '#dc2626', bg: '#fff1f2', border: '#fecdd3',
+    bar: '#f43f5e', label: 'Critical', action: '💧 Irrigate Now',
+  },
+  'Action Required': {
+    color: '#d97706', bg: '#fffbeb', border: '#fde68a',
+    bar: '#fbbf24', label: 'Monitor', action: '⚠️ Schedule Soon',
+  },
+  'Optimal': {
+    color: '#166534', bg: '#f0fdf4', border: '#bbf7d0',
+    bar: '#10b981', label: 'Healthy', action: '✓ All Good',
+  },
+  'Too Wet': {
+    color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe',
+    bar: '#3b82f6', label: 'Too Wet', action: '🔍 Check Drainage',
+  },
+};
+
+const MAP_COLORS = {
+  fill: {
+    'Critical':        'rgba(244,63,94,.5)',
+    'Action Required': 'rgba(251,191,36,.5)',
+    'Optimal':         'rgba(16,185,129,.4)',
+    'Too Wet':         'rgba(59,130,246,.45)',
+  },
+  stroke: {
+    'Critical':        '#f43f5e',
+    'Action Required': '#f59e0b',
+    'Optimal':         '#10b981',
+    'Too Wet':         '#3b82f6',
+  },
+};
+
+// ── GDD base temperatures (°C) ────────────────────────
+// Standard base temps used in BC tree fruit production
+const GDD_CONFIG = {
+  cherry: {
+    base: 5,        // base temp for sweet cherry development
+    stages: [
+      { gdd: 0,   label: 'Dormant',           spray: null },
+      { gdd: 50,  label: 'Bud swell',         spray: 'Apply dormant oil if scale present' },
+      { gdd: 100, label: 'Green tip',          spray: 'First copper spray — fire blight prevention' },
+      { gdd: 180, label: 'Pink bud',           spray: 'Brown rot cover spray due' },
+      { gdd: 220, label: 'Full bloom',         spray: '⚠️ No sprays — protect pollinators' },
+      { gdd: 280, label: 'Petal fall',         spray: 'Resume cover sprays — brown rot pressure' },
+      { gdd: 450, label: 'Fruit development',  spray: null },
+      { gdd: 900, label: 'Pre-harvest',        spray: 'Final pre-harvest interval check' },
+    ],
+  },
+  apple: {
+    base: 5,
+    stages: [
+      { gdd: 0,   label: 'Dormant',           spray: null },
+      { gdd: 45,  label: 'Silver tip',         spray: 'Dormant oil + copper if scab history' },
+      { gdd: 90,  label: 'Green tip',          spray: 'First scab spray window opens' },
+      { gdd: 150, label: 'Half-inch green',    spray: 'Scab ascospore season — 7-day spray interval' },
+      { gdd: 200, label: 'Pink',               spray: 'Fire blight risk rising — monitor rain events' },
+      { gdd: 250, label: 'Full bloom',         spray: '⚠️ No sprays — protect bees' },
+      { gdd: 310, label: 'Petal fall',         spray: 'Codling moth degree days start accumulating' },
+      { gdd: 550, label: 'Fruit development',  spray: 'Check codling moth trap counts' },
+    ],
+  },
+};
+
+    // ─── useWeather hook ───────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  useWeather.js
+//  Fetches Open-Meteo for Summerland BC.
+//  Parses: current conditions, 7-day forecast,
+//  frost signals, ET balance, GDD accumulation.
+//  Hook for NDVI integration left as a stub.
+// ─────────────────────────────────────────────
+
+
+// ── WMO weather code → emoji + label ──────────
+function wmoIcon(code) {
+  if (code === 0)  return { e: '☀️',  l: 'Clear' };
+  if (code <= 2)   return { e: '⛅',  l: 'Partly Cloudy' };
+  if (code === 3)  return { e: '☁️',  l: 'Overcast' };
+  if (code <= 49)  return { e: '🌫️', l: 'Fog' };
+  if (code <= 59)  return { e: '🌦️', l: 'Drizzle' };
+  if (code <= 69)  return { e: '🌧️', l: 'Rain' };
+  if (code <= 79)  return { e: '🌨️', l: 'Snow' };
+  if (code <= 82)  return { e: '🌧️', l: 'Showers' };
+  if (code <= 86)  return { e: '🌨️', l: 'Snow showers' };
+  return { e: '⛈️', l: 'Thunderstorm' };
+}
+
+// ── GDD helpers ───────────────────────────────
+// Accumulate GDD from daily min/max, base temp
+function calcGDDSeries(maxTemps, minTemps, base) {
+  return maxTemps.map((mx, i) => Math.max(0, ((mx + minTemps[i]) / 2) - base));
+}
+
+function accumulateGDD(series) {
+  let acc = 0;
+  return series.map(d => { acc += d; return acc; });
+}
+
+// Find the current phenological stage for a crop
+function getCurrentStage(totalGDD, crop) {
+  const stages = GDD_CONFIG[crop]?.stages ?? [];
+  let current = stages[0];
+  for (const s of stages) {
+    if (totalGDD >= s.gdd) current = s;
+    else break;
+  }
+  const nextIdx = stages.indexOf(current) + 1;
+  const next = stages[nextIdx] ?? null;
+  return { current, next, gddToNext: next ? next.gdd - totalGDD : null };
+}
+
+// ── Main fetch ────────────────────────────────
+async function fetchWeatherData() {
+  const { lat, lng } = WEATHER_COORDS;
+  const url =
+    `https://api.open-meteo.com/v1/forecast` +
+    `?latitude=${lat}&longitude=${lng}` +
+    `&current=temperature_2m,wind_speed_10m,relative_humidity_2m,weather_code,apparent_temperature,precipitation` +
+    `&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,` +
+    `wind_speed_10m_max,weather_code,et0_fao_evapotranspiration,` +
+    `precipitation_sum,relative_humidity_2m_max,relative_humidity_2m_min` +
+    `&hourly=temperature_2m` +
+    `&timezone=America%2FVancouver&forecast_days=7`;
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Open-Meteo ${res.status}`);
+  return res.json();
+}
+
+function parseWeather(raw) {
+  const c  = raw.current;
+  const dy = raw.daily;
+  const hr = raw.hourly;
+
+  const dayLabel = (t, i) =>
+    i === 0 ? 'Today' : new Date(t + 'T12:00').toLocaleDateString('en', { weekday: 'short' });
+
+  // Tonight's low: scan next 18 hourly values
+  const tonightLow = Math.round(
+    Math.min(...hr.temperature_2m.slice(0, 18).filter(v => v != null))
+  );
+
+  // 3-day water balance: rain in minus evaporation out
+  const rain3 = dy.precipitation_sum.slice(0, 3).reduce((a, v) => a + (v ?? 0), 0);
+  const et3   = dy.et0_fao_evapotranspiration.slice(0, 3).reduce((a, v) => a + (v ?? 0), 0);
+
+  // GDD accumulation over the 7-day window (cherry base 5°C, apple base 5°C)
+  // In production this would be cumulative from Jan 1 / bud break
+  // For now we show 7-day accumulated + annualised estimate note
+  const cherryGDDs = calcGDDSeries(dy.temperature_2m_max, dy.temperature_2m_min, GDD_CONFIG.cherry.base);
+  const appleGDDs  = calcGDDSeries(dy.temperature_2m_max, dy.temperature_2m_min, GDD_CONFIG.apple.base);
+  const gdd7Cherry = Math.round(cherryGDDs.reduce((a, v) => a + v, 0) * 10) / 10;
+  const gdd7Apple  = Math.round(appleGDDs.reduce((a, v) => a + v, 0) * 10) / 10;
+
+  // Estimate season-to-date GDD using day-of-year × average daily GDD
+  // (rough — replace with actual Jan 1 historical data when available)
+  const doy = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 1)) / 86400000);
+  const avgDailyGDD = gdd7Cherry / 7;
+  const estimatedSeasonGDD = Math.round(doy * avgDailyGDD);
+
+  const cherryStage = getCurrentStage(estimatedSeasonGDD, 'cherry');
+  const appleStage  = getCurrentStage(estimatedSeasonGDD, 'apple');
+
+  return {
+    current: {
+      temp:      Math.round(c.temperature_2m),
+      feelsLike: Math.round(c.apparent_temperature),
+      wind:      Math.round(c.wind_speed_10m),
+      humidity:  Math.round(c.relative_humidity_2m),
+      precip:    c.precipitation ?? 0,
+      ...wmoIcon(c.weather_code),
+    },
+    forecast: dy.time.map((t, i) => ({
+      day:    dayLabel(t, i),
+      high:   Math.round(dy.temperature_2m_max[i]),
+      low:    Math.round(dy.temperature_2m_min[i]),
+      rain:   dy.precipitation_probability_max[i],
+      rainMm: Math.round((dy.precipitation_sum[i] ?? 0) * 10) / 10,
+      wind:   Math.round(dy.wind_speed_10m_max[i]),
+      et:     Math.round((dy.et0_fao_evapotranspiration[i] ?? 0) * 10) / 10,
+      humMax: Math.round(dy.relative_humidity_2m_max?.[i] ?? 0),
+      ...wmoIcon(dy.weather_code[i]),
+    })),
+    signals: {
+      tonightLow,
+      rain3:    Math.round(rain3 * 10) / 10,
+      et3:      Math.round(et3  * 10) / 10,
+      netBalance: Math.round((rain3 - et3) * 10) / 10,
+      humidityMax: Math.round(dy.relative_humidity_2m_max?.[0] ?? 0),
+      heatToday: Math.round(dy.temperature_2m_max[0]),
+    },
+    gdd: {
+      sevenDayCherry: gdd7Cherry,
+      sevenDayApple:  gdd7Apple,
+      estimatedSeason: estimatedSeasonGDD,
+      cherryStage,
+      appleStage,
+    },
+  };
+}
+
+// ── Hook ──────────────────────────────────────
+function useWeather() {
+  const [weather, setWeather]     = useState(null);
+  const [loading, setLoading]     = useState(true);
+  const [error,   setError]       = useState(null);
+  const [lastFetched, setLastFetched] = useState(null);
+
+  const fetch_ = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const raw = await fetchWeatherData();
+      setWeather(parseWeather(raw));
+      setLastFetched(new Date());
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
     }
-  </script>
-  <script type="module">
-    import { createElement } from 'https://esm.sh/react@18';
-    import { createRoot }    from 'https://esm.sh/react-dom@18/client';
-    import App from './src/App.js';
-    createRoot(document.getElementById('root')).render(createElement(App));
+  }, []);
+
+  // Fetch on mount, refresh every 30 minutes
+  useEffect(() => {
+    fetch_();
+    const interval = setInterval(fetch_, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [fetch_]);
+
+  return { weather, loading, error, refetch: fetch_, lastFetched };
+}
+
+// ── NDVI stub ─────────────────────────────────
+// TODO: integrate Sentinel-2 NDVI via Microsoft Planetary Computer STAC API
+// Endpoint: https://planetarycomputer.microsoft.com/api/stac/v1/search
+// Query: collection=sentinel-2-l2a, bbox from zone polygon bounds, cloud cover < 20%
+// Compute: (B08 - B04) / (B08 + B04) averaged over polygon pixels
+// Return: ndvi score 0–1 per zone, date of last clear image
+async function fetchNDVI(_zonePolygons) {
+  // Not yet implemented
+  return null;
+}
+
+    // ─── useZones hook ────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  useZones.js
+//  Manages zone moisture state.
+//  Simulates sensor drift until real sensors
+//  are wired in via the Google Sheets pipeline.
+// ─────────────────────────────────────────────
+
+
+function deriveStatus(moisture) {
+  if (moisture >= 80) return 'Too Wet';
+  if (moisture >= 55) return 'Optimal';
+  if (moisture >= 35) return 'Action Required';
+  return 'Critical';
+}
+
+// TODO: replace simulation with real sensor fetch
+// Pipeline: Raspberry Pi → Google Sheets → fetch below
+// async function fetchSensorData(sheetId) {
+//   const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/Sheet1!A:F?key=${API_KEY}`;
+//   const res = await fetch(url);
+//   const { values } = await res.json();
+//   return values.map(row => ({ id: row[0], moisture: parseFloat(row[1]), temp: parseFloat(row[2]), ts: row[3] }));
+// }
+
+function useZones(farmId) {
+  const [zones, setZones] = useState(() =>
+    FARMS[farmId].zones.map(z => ({ ...z }))
+  );
+
+  // Reset when farm changes
+  useEffect(() => {
+    setZones(FARMS[farmId].zones.map(z => ({ ...z })));
+  }, [farmId]);
+
+  // Simulate gradual sensor drift (15s intervals)
+  // Remove this block once real sensors are connected
+  useEffect(() => {
+    if (!FARMS[farmId].zones.length) return;
+    const interval = setInterval(() => {
+      setZones(prev => prev.map(z => {
+        if (Math.random() > 0.82) {
+          const m = Math.max(10, Math.min(92, z.moisture + Math.round((Math.random() - 0.52) * 2)));
+          return { ...z, moisture: m, status: deriveStatus(m) };
+        }
+        return z;
+      }));
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [farmId]);
+
+  const refreshZones = useCallback(() => {
+    setZones(prev => prev.map(z => {
+      if (Math.random() > 0.4) {
+        const m = Math.max(10, Math.min(92, z.moisture + Math.round((Math.random() - 0.52) * 3)));
+        return { ...z, moisture: m, status: deriveStatus(m) };
+      }
+      return z;
+    }));
+  }, []);
+
+  const critical       = zones.filter(z => z.status === 'Critical');
+  const actionRequired = zones.filter(z => z.status === 'Action Required');
+  const optimal        = zones.filter(z => z.status === 'Optimal');
+  const tooWet         = zones.filter(z => z.status === 'Too Wet');
+  const avgMoisture    = zones.length
+    ? Math.round(zones.reduce((s, z) => s + z.moisture, 0) / zones.length)
+    : null;
+
+  return {
+    zones,
+    refreshZones,
+    summary: { critical, actionRequired, optimal, tooWet, avgMoisture },
+  };
+}
+
+    // ─── FarmMap component ────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  FarmMap.jsx  –  Leaflet satellite/street map
+//  Shows all 3 farm pins always.
+//  Zone polygons for whichever farm is active.
+// ─────────────────────────────────────────────
+
+
+const FARM_COLORS = ['#166534', '#1d4ed8', '#b45309'];
+
+function FarmMap({ zones, farmId, onZoneSelect }) {
+  const containerRef = useRef(null);
+  const mapRef       = useRef(null);
+  const satLayerRef  = useRef(null);
+  const streetLayerRef = useRef(null);
+  const zoneLayersRef  = useRef([]);
+  const farmMarkersRef = useRef([]);
+  const [mapMode, setMapMode] = useState('sat');
+
+  // Initialise map once
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+    const map = L.map(containerRef.current, {
+      center: [49.598422, -119.664789],
+      zoom: 15,
+      zoomControl: true,
+      attributionControl: true,
+    });
+    map.attributionControl.setPrefix('');
+
+    satLayerRef.current = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxZoom: 20, attribution: '© ESRI' }
+    );
+    streetLayerRef.current = L.tileLayer(
+      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { maxZoom: 19, attribution: '© OpenStreetMap' }
+    );
+    satLayerRef.current.addTo(map);
+    mapRef.current = map;
+    return () => { map.remove(); mapRef.current = null; };
+  }, []);
+
+  // Farm pin markers (all 3, always visible)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    farmMarkersRef.current.forEach(m => map.removeLayer(m));
+    farmMarkersRef.current = [];
+
+    FARMS.forEach((farm, i) => {
+      const active = i === farmId;
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="
+          font-family: -apple-system, sans-serif;
+          font-size: ${active ? 11 : 10}px;
+          font-weight: 800;
+          padding: ${active ? '5px 12px' : '4px 10px'};
+          border-radius: 20px;
+          white-space: nowrap;
+          box-shadow: 0 2px 10px rgba(0,0,0,.2);
+          border: 2px solid white;
+          background: ${active ? 'white' : FARM_COLORS[i]};
+          color: ${active ? FARM_COLORS[i] : 'white'};
+        ">${farm.icon} ${farm.name}</div>`,
+        iconAnchor: [0, 0],
+      });
+      const marker = L.marker([farm.lat, farm.lng], {
+        icon,
+        zIndexOffset: active ? 1000 : 0,
+      }).addTo(map);
+      farmMarkersRef.current.push(marker);
+    });
+  }, [farmId]);
+
+  // Zone polygons for active farm
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    zoneLayersRef.current.forEach(l => map.removeLayer(l));
+    zoneLayersRef.current = [];
+
+    if (!zones.length) {
+      // Zoom to show all farm pins
+      const bounds = L.latLngBounds(FARMS.map(f => [f.lat, f.lng]));
+      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 13 });
+      return;
+    }
+
+    zones.forEach(zone => {
+      const fill   = MAP_COLORS.fill[zone.status]   ?? 'rgba(148,163,184,.35)';
+      const stroke = MAP_COLORS.stroke[zone.status] ?? '#94a3b8';
+      const cfg    = STATUS_CONFIG[zone.status];
+
+      const poly = L.polygon(zone.coords, {
+        fillColor: fill, fillOpacity: 1,
+        color: stroke, weight: 2.5, opacity: .95,
+      });
+
+      poly.bindPopup(`
+        <div style="padding:12px 14px">
+          <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:6px">${zone.name}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;color:#64748b">${zone.crop} · ${zone.moisture}%</span>
+            <span style="font-size:10px;font-weight:800;padding:3px 9px;border-radius:20px;
+              background:${cfg.bg};color:${cfg.color};border:1.5px solid ${cfg.border}">
+              ${zone.status}
+            </span>
+          </div>
+        </div>
+      `, { maxWidth: 260, closeButton: false });
+
+      poly.on('click', () => onZoneSelect?.(zone.id));
+      poly.addTo(map);
+      zoneLayersRef.current.push(poly);
+    });
+
+    const allCoords = zones.flatMap(z => z.coords);
+    map.fitBounds(L.latLngBounds(allCoords), { padding: [32, 32] });
+  }, [zones]);
+
+  function switchLayer(mode) {
+    const map = mapRef.current;
+    if (!map) return;
+    setMapMode(mode);
+    if (mode === 'sat') {
+      map.removeLayer(streetLayerRef.current);
+      satLayerRef.current.addTo(map);
+    } else {
+      map.removeLayer(satLayerRef.current);
+      streetLayerRef.current.addTo(map);
+    }
+    zoneLayersRef.current.forEach(l => l.bringToFront());
+  }
+
+  const farm = FARMS[farmId];
+
+  return (
+    <div className="map-screen">
+      <div ref={containerRef} id="leaflet-map" />
+
+      <div className="map-layer-btns">
+        <button
+          className={`map-layer-btn${mapMode === 'sat' ? ' active' : ''}`}
+          onClick={() => switchLayer('sat')}>🛰 Sat</button>
+        <button
+          className={`map-layer-btn${mapMode === 'street' ? ' active' : ''}`}
+          onClick={() => switchLayer('street')}>🗺 Street</button>
+      </div>
+
+      {!zones.length && (
+        <div className="map-no-blocks-badge">
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#475569', marginBottom: 3 }}>
+            {farm.icon} {farm.name}
+          </div>
+          <div style={{ fontSize: 11, color: '#94a3b8' }}>
+            No blocks mapped yet · Upload a KML to add zones
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+    // ─── TodayScreen component ────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  TodayScreen.jsx
+//  Morning briefing, block dot strip,
+//  expandable block detail.
+// ─────────────────────────────────────────────
+
+
+// ── Briefing sentence builder ──────────────────
+function buildBriefing(zones, weather) {
+  const crits = zones.filter(z => z.status === 'Critical');
+  const warns  = zones.filter(z => z.status === 'Action Required');
+  const rainDays = (weather?.forecast ?? []).filter(d => d.rain >= 50);
+  const rainToday = rainDays[0]?.day === 'Today';
+
+  let sentence = '';
+  if (!zones.length) {
+    sentence = 'No sensors on this farm yet.';
+  } else if (rainToday) {
+    sentence = 'Rain today — skip all irrigation.';
+  } else if (crits.length && warns.length) {
+    sentence = `Water ${crits.map(z => z.name).join(' & ')} today. Schedule ${warns.map(z => z.name).join(', ')} soon.`;
+  } else if (crits.length) {
+    sentence = `Water ${crits.map(z => z.name).join(' & ')} today.`;
+  } else if (warns.length) {
+    sentence = `Monitor ${warns.map(z => z.name).join(', ')} — water within 2 days.`;
+  } else {
+    sentence = 'All blocks healthy. No irrigation needed today.';
+  }
+
+  const rainNote = (!rainToday && rainDays[0])
+    ? `${rainDays[0].day} shows ${rainDays[0].rain}% rain — consider holding off until after.`
+    : null;
+
+  return { sentence, rainNote, isCritical: crits.length > 0, isHealthy: !crits.length && !warns.length };
+}
+
+// ── Block dot ─────────────────────────────────
+function BlockDot({ zone, selected, onSelect }) {
+  const cfg  = STATUS_CONFIG[zone.status];
+  const size = selected ? 44 : 38;
+  return (
+    <div className="dot-wrap" onClick={() => onSelect(selected ? null : zone.id)}>
+      <div
+        className="dot-circle"
+        style={{
+          width: size, height: size,
+          background: cfg.bar,
+          boxShadow: selected
+            ? `0 0 0 3px ${cfg.bar}50, 0 2px 8px ${cfg.bar}60`
+            : '0 1px 4px rgba(0,0,0,.12)',
+        }}>
+        {zone.id}
+      </div>
+      <div className="dot-pct" style={{ color: selected ? cfg.color : undefined }}>
+        {zone.moisture}%
+      </div>
+    </div>
+  );
+}
+
+// ── Block detail sheet ─────────────────────────
+function BlockDetail({ zone }) {
+  const cfg = STATUS_CONFIG[zone.status];
+  const isCrit = zone.status === 'Critical';
+
+  function handleAction() {
+    const msgs = {
+      'Critical':        `Irrigation reminder set for ${zone.name}.\nRecommended: 45 min at medium flow.`,
+      'Action Required': `${zone.name} scheduled for tomorrow morning.`,
+      'Optimal':         `${zone.name} is healthy — no action needed.`,
+      'Too Wet':         `Checking drainage for ${zone.name}.`,
+    };
+    alert(msgs[zone.status]);
+  }
+
+  return (
+    <div className="detail-sheet fadein">
+      {/* Colour stripe */}
+      <div style={{ height: 4, background: cfg.bar }} />
+
+      {/* Header */}
+      <div className="p-16" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--slate-800)', letterSpacing: '-.3px' }}>
+            {zone.name}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--slate-400)', marginTop: 3 }}>
+            {zone.crop} · {zone.depth}cm depth · Last read {zone.lastRead}
+          </div>
+        </div>
+        <span
+          className="status-badge"
+          style={{ background: cfg.bg, color: cfg.color, border: `1.5px solid ${cfg.border}` }}>
+          {cfg.label}
+        </span>
+      </div>
+
+      {/* Moisture */}
+      <div className="px-16" style={{ paddingBottom: 14 }}>
+        <div className="detail-moisture-big" style={{ color: cfg.color }}>
+          {zone.moisture}%
+        </div>
+        <div className="section-label" style={{ marginTop: 3, marginBottom: 10 }}>Soil Moisture</div>
+        <div className="moisture-bar-bg">
+          <div className="moisture-bar-fill" style={{ width: `${zone.moisture}%`, background: cfg.bar }} />
+        </div>
+      </div>
+
+      {/* Metrics */}
+      <div className="card-divider" />
+      <div className="metric-grid">
+        <div className="metric-cell">
+          <div className="metric-label">Ground Temp</div>
+          <div className="metric-value">{zone.temp}°C</div>
+        </div>
+        <div className="metric-cell">
+          <div className="metric-label">Crop</div>
+          <div className="metric-value">{zone.crop}</div>
+        </div>
+        <div className="metric-cell">
+          <div className="metric-label">Sensor Depth</div>
+          <div className="metric-value">{zone.depth}cm</div>
+        </div>
+      </div>
+
+      {/* Action */}
+      <div className="p-16">
+        <button
+          className="action-btn"
+          onClick={handleAction}
+          style={{
+            background: isCrit ? cfg.bar : cfg.bg,
+            color: isCrit ? 'white' : cfg.color,
+            border: isCrit ? 'none' : `1.5px solid ${cfg.border}`,
+            boxShadow: isCrit ? `0 2px 14px ${cfg.bar}50` : 'none',
+          }}>
+          {cfg.action}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Today screen ─────────────────────────────
+function TodayScreen({ zones, weather, summary }) {
+  const [selId, setSelId] = useState(null);
+
+  const sorted   = useMemo(() => [...zones].sort((a, b) => a.moisture - b.moisture), [zones]);
+  const selZone  = useMemo(() => zones.find(z => z.id === selId), [zones, selId]);
+  const briefing = useMemo(() => buildBriefing(zones, weather), [zones, weather]);
+
+  return (
+    <div className="screen">
+      <div style={{ padding: '14px 14px 0', display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+        {/* ── Briefing card ── */}
+        <div className="card fadein">
+          <div className="p-16">
+            <div className="section-label" style={{ marginBottom: 8 }}>
+              {new Date().toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </div>
+            <div className="briefing-text">
+              {briefing.isCritical
+                ? <span><span className="urgent">{briefing.sentence.split('.')[0]}.</span>
+                    {briefing.sentence.includes('.') && briefing.sentence.split('.').slice(1).join('.')}</span>
+                : briefing.isHealthy
+                  ? <span className="ok">{briefing.sentence}</span>
+                  : <span>{briefing.sentence}</span>
+              }
+            </div>
+            {briefing.rainNote && (
+              <div className="rain-note">
+                <span style={{ fontSize: 16, flexShrink: 0 }}>🌧️</span>
+                <span className="rain-note-text">{briefing.rainNote}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Dot strip */}
+          {sorted.length > 0 && (
+            <>
+              <div className="card-divider" />
+              <div className="p-16">
+                <div className="section-label" style={{ marginBottom: 12 }}>
+                  All blocks — sorted driest first
+                </div>
+                <div className="dot-strip">
+                  {sorted.map(z => (
+                    <BlockDot
+                      key={z.id}
+                      zone={z}
+                      selected={selId === z.id}
+                      onSelect={setSelId}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* ── Block detail ── */}
+        {selZone && <BlockDetail zone={selZone} />}
+
+        {/* ── Summary row ── */}
+        {zones.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8 }}>
+            {[
+              { label: 'Critical', value: summary.critical.length,       color: '#dc2626', bg: '#fff1f2' },
+              { label: 'Monitor',  value: summary.actionRequired.length,  color: '#d97706', bg: '#fffbeb' },
+              { label: 'Healthy',  value: summary.optimal.length,         color: '#166534', bg: '#f0fdf4' },
+              { label: 'Avg',      value: `${summary.avgMoisture}%`,      color: '#1d4ed8', bg: '#eff6ff' },
+            ].map(({ label, value, color, bg }) => (
+              <div key={label} className="card" style={{ padding: '10px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 800, color }}>{value}</div>
+                <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--slate-400)', textTransform: 'uppercase', letterSpacing: '1px', marginTop: 2 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+    // ─── WeatherScreen component ──────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  WeatherScreen.jsx
+//  Current conditions, 4 actionable signals,
+//  GDD stage + spray timing, 7-day forecast.
+// ─────────────────────────────────────────────
+
+
+// ── Skeleton placeholder ───────────────────────
+function Skeleton({ h = 20, w = '100%', r = 6 }) {
+  return <span className="skeleton" style={{ height: h, width: w, borderRadius: r }} />;
+}
+
+// ── Signal cell ───────────────────────────────
+function Signal({ icon, label, value, sub, state = 'neutral' }) {
+  return (
+    <div className={`signal-cell ${state}`}>
+      <div className="signal-icon">{icon}</div>
+      <div className="signal-label">{label}</div>
+      <div className="signal-value">{value}</div>
+      <div className="signal-sub">{sub}</div>
+    </div>
+  );
+}
+
+// ── GDD stage panel ───────────────────────────
+function GDDPanel({ gdd }) {
+  if (!gdd) return null;
+
+  const { cherryStage, appleStage, estimatedSeason, sevenDayCherry, sevenDayApple } = gdd;
+
+  function StageCard({ crop, icon, stage, gdd7 }) {
+    const { current, next, gddToNext } = stage;
+    const progress = next
+      ? Math.min(100, Math.round(((estimatedSeason - current.gdd) / (next.gdd - current.gdd)) * 100))
+      : 100;
+
+    return (
+      <div className="card" style={{ overflow: 'hidden' }}>
+        <div style={{ padding: '12px 14px 10px', borderBottom: '1px solid var(--slate-100)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <span style={{ fontSize: 18 }}>{icon}</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--slate-800)' }}>{crop}</div>
+              <div style={{ fontSize: 10, color: 'var(--slate-400)' }}>~{estimatedSeason} GDD accumulated</div>
+            </div>
+          </div>
+          <div
+            className="stage-badge"
+            style={{ background: 'var(--green-50)', color: 'var(--green-800)', border: '1px solid var(--green-100)' }}>
+            📍 {current.label}
+          </div>
+        </div>
+
+        {/* Progress to next stage */}
+        {next && (
+          <div style={{ padding: '10px 14px 12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--slate-500)' }}>
+                → {next.label}
+              </span>
+              <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--green-800)' }}>
+                ~{gddToNext} GDD to go
+              </span>
+            </div>
+            <div className="gdd-progress-bg">
+              <div className="gdd-progress-fill" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+        )}
+
+        {/* Spray alert */}
+        {current.spray && (
+          <div style={{ padding: '0 14px 12px' }}>
+            <div className="spray-alert">
+              <span style={{ fontSize: 14, flexShrink: 0 }}>🌿</span>
+              <span className="spray-alert-text">{current.spray}</span>
+            </div>
+          </div>
+        )}
+
+        <div style={{ padding: '8px 14px', background: 'var(--slate-50)', borderTop: '1px solid var(--slate-100)' }}>
+          <span style={{ fontSize: 10, color: 'var(--slate-400)' }}>
+            +{gdd7} GDD accumulated this week
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
+        <span style={{ fontSize: 14 }}>🌱</span>
+        <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--slate-700)' }}>
+          Crop Development & Spray Timing
+        </span>
+      </div>
+      <StageCard crop="Cherry" icon="🍒" stage={cherryStage} gdd7={sevenDayCherry} />
+      <StageCard crop="Apple"  icon="🍎" stage={appleStage}  gdd7={sevenDayApple}  />
+      <div style={{ fontSize: 10, color: 'var(--slate-400)', lineHeight: 1.5, padding: '2px 2px' }}>
+        GDD = Growing Degree Days. Accumulated heat units that predict development stages.
+        Season estimate is approximated from day-of-year — connect a Jan 1 baseline for accuracy.
+      </div>
+    </div>
+  );
+}
+
+// ── Main screen ────────────────────────────────
+function WeatherScreen({ weather, loading, error, refetch }) {
+
+  if (error) return (
+    <div className="screen">
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="card p-16" style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>🌐</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--slate-700)', marginBottom: 6 }}>
+            Weather unavailable
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--slate-400)', marginBottom: 14, lineHeight: 1.6 }}>
+            Open-Meteo is blocked in this preview. Works fine when the file is opened directly in a browser or on GitHub Pages.
+          </div>
+          <button
+            onClick={refetch}
+            style={{
+              padding: '8px 20px', borderRadius: 10, background: 'var(--green-50)',
+              color: 'var(--green-800)', border: '1.5px solid var(--green-100)',
+              fontSize: 12, fontWeight: 800, fontFamily: 'inherit',
+            }}>
+            ↺ Retry
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) return (
+    <div className="screen">
+      <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="card p-16">
+          <Skeleton h={14} w={140} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '14px 0' }}>
+            <Skeleton h={40} w={40} r="50%" />
+            <Skeleton h={38} w={80} />
+            <div style={{ flex: 1 }}><Skeleton h={11} /><Skeleton h={11} style={{ marginTop: 6 }} /></div>
+          </div>
+          <div className="signals-grid">
+            {[0,1,2,3].map(i => <div key={i} className="signal-cell"><Skeleton h={80} /></div>)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const { current, forecast, signals, gdd } = weather;
+  const { tonightLow, rain3, et3, netBalance, humidityMax, heatToday } = signals;
+
+  const frostAlert  = tonightLow <= 0;
+  const frostWarn   = tonightLow <= 2 && !frostAlert;
+  const heatStress  = heatToday >= 30;
+  const diseaseRisk = humidityMax >= 85 && current.temp >= 15;
+
+  return (
+    <div className="screen">
+      <div style={{ padding: '14px 14px 0', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {/* ── Current conditions ── */}
+        <div className="card fadein">
+          <div style={{ padding: '8px 14px 6px', background: 'var(--slate-50)', borderBottom: '1px solid var(--slate-100)' }}>
+            <span className="section-label">Summerland BC · Live · Open-Meteo</span>
+          </div>
+          <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: 40, lineHeight: 1 }}>{current.e}</span>
+            <div>
+              <span style={{ fontSize: 36, fontWeight: 800, color: 'var(--slate-800)', letterSpacing: '-1.5px', lineHeight: 1 }}>
+                {current.temp}°C
+              </span>
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--slate-400)', lineHeight: 1.8, marginLeft: 4 }}>
+              <div>Feels {current.feelsLike}°C · {current.l}</div>
+              <div>{current.humidity}% humidity</div>
+              <div>{current.wind} km/h wind</div>
+            </div>
+          </div>
+
+          {/* 4 signals */}
+          <div className="signals-grid">
+            <Signal
+              icon={frostAlert ? '🚨' : frostWarn ? '🌡️' : '🌙'}
+              label="Tonight's Low"
+              value={`${tonightLow}°C`}
+              sub={frostAlert ? 'FROST — protect blossoms now' : frostWarn ? 'Near-frost — monitor overnight' : 'No frost risk'}
+              state={frostAlert ? 'alert' : frostWarn ? 'warn' : 'ok'}
+            />
+            <Signal
+              icon={netBalance < -3 ? '💦' : netBalance < 0 ? '🌿' : '🌧️'}
+              label="3-Day Water Balance"
+              value={`${netBalance > 0 ? '+' : ''}${netBalance}mm`}
+              sub={`${rain3}mm rain − ${et3}mm evaporation${netBalance < -3 ? ' · Soil drying fast' : netBalance < 0 ? ' · Slight deficit' : ' · Rain covering losses'}`}
+              state={netBalance < -3 ? 'alert' : netBalance < 0 ? 'warn' : 'ok'}
+            />
+            <Signal
+              icon={heatStress ? '🔥' : '☀️'}
+              label="Heat Today"
+              value={`${heatToday}°C`}
+              sub={heatStress ? 'Above 30°C — moisture depletes faster' : heatToday >= 25 ? 'Warm — check critical blocks afternoon' : 'Moderate — normal depletion rate'}
+              state={heatStress ? 'warn' : 'neutral'}
+            />
+            <Signal
+              icon={diseaseRisk ? '⚠️' : '🍃'}
+              label="Disease Pressure"
+              value={`${humidityMax}% RH`}
+              sub={diseaseRisk ? 'High humidity + warm — brown rot / scab risk elevated' : 'Humidity within safe range'}
+              state={diseaseRisk ? 'warn' : 'ok'}
+            />
+          </div>
+
+          {/* ET bar */}
+          <div style={{ padding: '10px 14px 12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span className="section-label">Evapotranspiration · 3-day loss</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#d97706' }}>{et3}mm</span>
+            </div>
+            <div className="et-bar-bg">
+              <div className="et-bar-fill" style={{ width: `${Math.min(100, (et3 / 12) * 100)}%` }} />
+            </div>
+            <div style={{ fontSize: 10, color: 'var(--slate-400)', marginTop: 5 }}>
+              Higher in heat &amp; wind · directly drives how fast your blocks dry out
+            </div>
+          </div>
+        </div>
+
+        {/* ── 7-day forecast ── */}
+        <div className="card fadein">
+          <div style={{ padding: '8px 14px 6px', background: 'var(--slate-50)', borderBottom: '1px solid var(--slate-100)' }}>
+            <span className="section-label">7-Day Forecast</span>
+          </div>
+          <div className="forecast-row">
+            {forecast.map((d, i) => {
+              const rain  = d.rain >= 50;
+              const frost = d.low <= 2;
+              return (
+                <div key={i} className={`forecast-cell${rain ? ' rain-day' : frost ? ' frost-day' : ''}`}>
+                  <div className={`fc-day${rain ? ' rain' : frost ? ' frost' : ''}`}>{d.day}</div>
+                  <div className="fc-emoji">{d.e}</div>
+                  <div className="fc-high">{d.high}°</div>
+                  <div className={`fc-low${frost ? ' frost' : ''}`}>{d.low}°</div>
+                  {rain  && <span className="fc-tag" style={{ background: '#dbeafe', color: '#1d4ed8' }}>{d.rain}%</span>}
+                  {frost && !rain && <span className="fc-tag" style={{ background: '#ede9fe', color: '#7c3aed' }}>❄</span>}
+                  {d.et > 0 && <span style={{ fontSize: 7.5, color: 'var(--slate-400)' }}>{d.et}mm</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── GDD + spray timing ── */}
+        <GDDPanel gdd={gdd} />
+
+      </div>
+    </div>
+  );
+}
+
+    // ─── App (root) ───────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  App.jsx  –  root component
+//  Bottom tab nav: Map / Today / Weather
+//  Farm pill selector in header
+// ─────────────────────────────────────────────
+
+
+// ── Logo ──────────────────────────────────────
+function Logo() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 64 64" style={{ flexShrink: 0 }}>
+      <rect width="64" height="64" rx="14" fill="#166534"/>
+      <path d="M32 52C32 52 16 42 16 28C16 20.27 23.16 14 32 14C40.84 14 48 20.27 48 28C48 42 32 52 32 52Z" fill="#86efac"/>
+      <path d="M32 52L32 22" stroke="#166534" strokeWidth="2.5" strokeLinecap="round"/>
+      <path d="M32 38C30 34 26 30 22 27" stroke="#166534" strokeWidth="2" strokeLinecap="round" opacity=".7"/>
+      <path d="M32 30C34 26 38 23 41 21" stroke="#166534" strokeWidth="2" strokeLinecap="round" opacity=".7"/>
+    </svg>
+  );
+}
+
+// ── Sync button ───────────────────────────────
+function SyncBtn({ syncing, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: 34, height: 34, borderRadius: 10,
+        background: 'var(--slate-50)', border: '1.5px solid var(--slate-200)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+      <svg
+        className={syncing ? 'spin' : ''}
+        width="15" height="15" viewBox="0 0 24 24"
+        fill="none" stroke="#166534" strokeWidth="2.3" strokeLinecap="round">
+        <polyline points="23 4 23 10 17 10"/>
+        <polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+      </svg>
+    </button>
+  );
+}
+
+// ── Tab bar ───────────────────────────────────
+const TABS = [
+  { id: 'map',     label: 'Map',     emoji: '🗺️' },
+  { id: 'today',   label: 'Today',   emoji: '🌱' },
+  { id: 'weather', label: 'Weather', emoji: '🌤️' },
+];
+
+function TabBar({ active, onSelect, criticalCount }) {
+  return (
+    <div className="tab-bar">
+      {TABS.map(tab => (
+        <button
+          key={tab.id}
+          className={`tab-item${active === tab.id ? ' active' : ''}`}
+          onClick={() => onSelect(tab.id)}>
+          <div className="tab-icon">
+            {tab.emoji}
+            {tab.id === 'today' && criticalCount > 0 && (
+              <span className="tab-badge">{criticalCount}</span>
+            )}
+          </div>
+          <span className="tab-label">{tab.label}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Farm pill badge helper ─────────────────────
+function farmBadge(farm) {
+  if (!farm.zones.length) return null;
+  const crits = farm.zones.filter(z => z.status === 'Critical').length;
+  const warns  = farm.zones.filter(z => z.status === 'Action Required').length;
+  if (crits) return crits;
+  if (warns) return `${warns}⚠`;
+  return null;
+}
+
+// ── Root app ──────────────────────────────────
+function App() {
+  const [tab, setTab]     = useState('today');
+  const [farmId, setFarmId] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const [time, setTime]   = useState(new Date());
+
+  const { weather, loading: wLoading, error: wError, refetch, lastFetched } = useWeather();
+  const { zones, refreshZones, summary } = useZones(farmId);
+
+  // Clock tick
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  async function handleSync() {
+    setSyncing(true);
+    refreshZones();
+    await refetch();
+    setSyncing(false);
+  }
+
+  const critCount = summary.critical.length;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden' }}>
+
+      {/* ── Header ── */}
+      <header className="app-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Logo />
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--slate-800)', letterSpacing: '-.2px', lineHeight: 1.2 }}>
+              Lekhi Farm
+            </div>
+            <div style={{ fontSize: 9.5, fontWeight: 700, color: '#10b981', letterSpacing: '.5px' }}>
+              Monitoring
+            </div>
+          </div>
+        </div>
+
+        {/* Farm pills */}
+        <div className="farm-pills" style={{ flex: 1, margin: '0 12px', justifyContent: 'center' }}>
+          {FARMS.map((farm, i) => {
+            const badge = farmBadge(farm);
+            return (
+              <button
+                key={farm.id}
+                className={`farm-pill${farmId === i ? ' active' : ''}`}
+                onClick={() => setFarmId(i)}>
+                <span>{farm.icon}</span>
+                <span>{farm.name}</span>
+                {badge && farmId === i && (
+                  <span className="farm-pill-badge">{badge}</span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <SyncBtn syncing={syncing} onClick={handleSync} />
+      </header>
+
+      {/* ── Screen content ── */}
+      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+
+        {/* Map is always mounted to preserve map state, show/hide with CSS */}
+        <div style={{ display: tab === 'map' ? 'flex' : 'none', flexDirection: 'column', height: '100%' }}>
+          <FarmMap
+            zones={zones}
+            farmId={farmId}
+            onZoneSelect={() => {}}
+          />
+        </div>
+
+        {tab === 'today' && (
+          <TodayScreen
+            zones={zones}
+            weather={weather}
+            summary={summary}
+          />
+        )}
+
+        {tab === 'weather' && (
+          <WeatherScreen
+            weather={weather}
+            loading={wLoading}
+            error={wError}
+            refetch={refetch}
+          />
+        )}
+      </div>
+
+      {/* ── Bottom tab bar ── */}
+      <TabBar active={tab} onSelect={setTab} criticalCount={critCount} />
+
+    </div>
+  );
+}
+
+    // ─── Mount ────────────────────────────────────────────────────────────
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+
+    // Hide loader after first render
     requestAnimationFrame(() => {
       const loader = document.getElementById('loading-screen');
-      if (loader) { loader.style.opacity='0'; setTimeout(()=>loader.remove(),450); }
+      if (loader) { loader.style.opacity = '0'; setTimeout(() => loader.remove(), 450); }
     });
   </script>
+
 </body>
 </html>
