@@ -144,6 +144,7 @@ function BlockRow({ zone, onSelect, selected }) {
 export default function TodayScreen({ zones, weather }) {
   const [selId, setSelId] = useState(null)
 
+  if (!zones || !Array.isArray(zones)) return null
   const critical       = zones.filter(z => z.status === 'Critical')
   const actionRequired = zones.filter(z => z.status === 'Action Required')
   const sorted         = useMemo(() =>
