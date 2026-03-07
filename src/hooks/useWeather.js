@@ -6,7 +6,7 @@
 //  Hook for NDVI integration left as a stub.
 // ─────────────────────────────────────────────
 
-import { useState, useEffect, useCallback } from 'https://esm.sh/react@18';
+import { useState, useEffect, useCallback } from 'react';
 import { WEATHER_COORDS, GDD_CONFIG } from '../data/farms.js';
 
 // ── WMO weather code → emoji + label ──────────

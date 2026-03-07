@@ -5,7 +5,7 @@
 //  are wired in via the Google Sheets pipeline.
 // ─────────────────────────────────────────────
 
-import { useState, useEffect, useCallback } from 'https://esm.sh/react@18';
+import { useState, useEffect, useCallback } from 'react';
 import { FARMS } from '../data/farms.js';
 
 function deriveStatus(moisture) {

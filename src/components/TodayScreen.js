@@ -4,7 +4,7 @@
 //  expandable block detail.
 // ─────────────────────────────────────────────
 
-import { useState, useMemo } from 'https://esm.sh/react@18';
+import { useState, useMemo } from 'react';
 import { STATUS_CONFIG } from '../data/farms.js';
 
 // ── Briefing sentence builder ──────────────────

@@ -4,7 +4,7 @@
 //  Zone polygons for whichever farm is active.
 // ─────────────────────────────────────────────
 
-import { useEffect, useRef, useState } from 'https://esm.sh/react@18';
+import { useEffect, useRef, useState } from 'react';
 import { FARMS, MAP_COLORS, STATUS_CONFIG } from '../data/farms.js';
 
 const FARM_COLORS = ['#166534', '#1d4ed8', '#b45309'];

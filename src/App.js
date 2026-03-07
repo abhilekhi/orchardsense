@@ -4,13 +4,13 @@
 //  Farm pill selector in header
 // ─────────────────────────────────────────────
 
-import { useState, useEffect } from 'https://esm.sh/react@18';
+import { useState, useEffect } from 'react';
 import { FARMS } from './data/farms.js';
 import { useWeather } from './hooks/useWeather.js';
 import { useZones }  from './hooks/useZones.js';
-import FarmMap from "./components/FarmMap.js"
-import TodayScreen from "./components/TodayScreen.js"
-import WeatherScreen from "./components/WeatherScreen.js"
+import { FarmMap }       from './components/FarmMap.js';
+import { TodayScreen }   from './components/TodayScreen.js';
+import { WeatherScreen } from './components/WeatherScreen.js';
 
 // ── Logo ──────────────────────────────────────
 function Logo() {
