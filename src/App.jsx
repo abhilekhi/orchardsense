@@ -48,7 +48,7 @@ export default function App() {
 
         {/* Farm pills */}
         <div style={{ display: 'flex', gap: 6, overflow: 'hidden', flex: 1, margin: '0 10px', justifyContent: 'center' }}>
-          {FARMS.map((farm, i) => (
+          {(FARMS ?? []).map((farm, i) => (
             <button key={farm.id} onClick={() => setFarmId(i)} style={{
               display: 'flex', alignItems: 'center', gap: 4,
               padding: '5px 10px', borderRadius: 30,

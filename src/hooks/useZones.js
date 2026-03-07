@@ -9,17 +9,15 @@ function deriveStatus(m) {
 }
 
 export function useZones(farmId) {
-  const [zones, setZones] = useState(() => (FARMS[farmId]?.zones ?? []).map(z => ({ ...z })))
+  const safeZones = () => (FARMS[farmId]?.zones ?? []).map(z => ({ ...z }))
+  const [zones, setZones] = useState(safeZones)
+
+  useEffect(() => { setZones(safeZones()) }, [farmId])
 
   useEffect(() => {
-    setZones((FARMS[farmId]?.zones ?? []).map(z => ({ ...z })))
-  }, [farmId])
-
-  // Simulate drift until real sensors connected
-  useEffect(() => {
-    if (!FARMS[farmId].zones.length) return
+    if (!FARMS[farmId]?.zones?.length) return
     const id = setInterval(() => {
-      setZones(prev => prev.map(z => {
+      setZones(prev => (prev ?? []).map(z => {
         if (Math.random() > 0.82) {
           const m = Math.max(10, Math.min(92, z.moisture + Math.round((Math.random() - 0.52) * 2)))
           return { ...z, moisture: m, status: deriveStatus(m) }
@@ -31,18 +29,19 @@ export function useZones(farmId) {
   }, [farmId])
 
   const refresh = useCallback(() => {
-    setZones(prev => prev.map(z => {
+    setZones(prev => (prev ?? []).map(z => {
       const m = Math.max(10, Math.min(92, z.moisture + Math.round((Math.random() - 0.52) * 3)))
       return { ...z, moisture: m, status: deriveStatus(m) }
     }))
   }, [])
 
-  const critical        = zones.filter(z => z.status === 'Critical')
-  const actionRequired  = zones.filter(z => z.status === 'Action Required')
-  const optimal         = zones.filter(z => z.status === 'Optimal')
-  const avgMoisture     = zones.length
-    ? Math.round(zones.reduce((s, z) => s + z.moisture, 0) / zones.length)
+  const zones_safe = zones ?? []
+  const critical       = zones_safe.filter(z => z.status === 'Critical')
+  const actionRequired = zones_safe.filter(z => z.status === 'Action Required')
+  const optimal        = zones_safe.filter(z => z.status === 'Optimal')
+  const avgMoisture    = zones_safe.length
+    ? Math.round(zones_safe.reduce((s, z) => s + z.moisture, 0) / zones_safe.length)
     : null
 
-  return { zones, refresh, summary: { critical, actionRequired, optimal, avgMoisture } }
+  return { zones: zones_safe, refresh, summary: { critical, actionRequired, optimal, avgMoisture } }
 }
