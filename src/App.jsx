@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { FARMS } from './data/farms.js'
 import { useWeather } from './hooks/useWeather.js'
 import { useZones }   from './hooks/useZones.js'
@@ -14,6 +14,8 @@ export default function App() {
   const { weather, loading: wLoad, error: wErr, refetch } = useWeather()
   const { zones, refresh, summary } = useZones(farmId)
 
+  console.log('RENDER', { tab, farmId, zonesLen: zones?.length, weather: !!weather, summary })
+
   async function handleSync() {
     setSyncing(true)
     refresh()
@@ -21,19 +23,17 @@ export default function App() {
     setSyncing(false)
   }
 
-  const critCount = summary.critical.length
+  const critCount = (summary?.critical ?? []).length
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100dvh',
       overflow: 'hidden', background: '#f0f2f0' }}>
 
-      {/* ── Header ── */}
       <header style={{
         height: 56, background: 'white', borderBottom: '1px solid #e2e8f0',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '0 16px', flexShrink: 0, zIndex: 30,
       }}>
-        {/* Logo + name */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 32, height: 32, borderRadius: 9, background: '#166534',
@@ -46,7 +46,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* Farm pills */}
         <div style={{ display: 'flex', gap: 6, overflow: 'hidden', flex: 1, margin: '0 10px', justifyContent: 'center' }}>
           {(FARMS ?? []).map((farm, i) => (
             <button key={farm.id} onClick={() => setFarmId(i)} style={{
@@ -59,7 +58,7 @@ export default function App() {
               flexShrink: 0, WebkitTapHighlightColor: 'transparent',
             }}>
               <span>{farm.icon}</span>
-              <span style={{ display: window.innerWidth < 380 ? 'none' : 'inline' }}>{farm.name}</span>
+              <span>{farm.name}</span>
               {farmId === i && critCount > 0 && (
                 <span style={{ background: '#dc2626', color: 'white', borderRadius: 10,
                   fontSize: 9, fontWeight: 800, padding: '1px 5px' }}>{critCount}</span>
@@ -68,13 +67,12 @@ export default function App() {
           ))}
         </div>
 
-        {/* Sync */}
         <button onClick={handleSync} style={{
           width: 34, height: 34, borderRadius: 10, background: '#f8fafc',
           border: '1.5px solid #e2e8f0', display: 'flex', alignItems: 'center',
           justifyContent: 'center', cursor: 'pointer', flexShrink: 0,
         }}>
-          <svg className={syncing ? 'spin' : ''} width="15" height="15" viewBox="0 0 24 24"
+          <svg width="15" height="15" viewBox="0 0 24 24"
             fill="none" stroke="#166534" strokeWidth="2.3" strokeLinecap="round">
             <polyline points="23 4 23 10 17 10"/>
             <polyline points="1 20 1 14 7 14"/>
@@ -83,15 +81,13 @@ export default function App() {
         </button>
       </header>
 
-      {/* ── Screen content ── */}
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {/* Map always mounted to preserve state */}
         <div style={{ display: tab === 'map' ? 'flex' : 'none', flex: 1, flexDirection: 'column' }}>
-          <FarmMap zones={zones} farmId={farmId} />
+          <FarmMap zones={zones ?? []} farmId={farmId} />
         </div>
         {tab === 'today' && (
           <div style={{ display: 'flex', flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
-            <TodayScreen zones={zones} weather={weather} />
+            <TodayScreen zones={zones ?? []} weather={weather} />
           </div>
         )}
         {tab === 'weather' && (
@@ -101,7 +97,6 @@ export default function App() {
         )}
       </div>
 
-      {/* ── Bottom tab bar ── */}
       <nav style={{
         position: 'fixed', bottom: 0, left: 0, right: 0,
         height: `calc(68px + env(safe-area-inset-bottom, 0px))`,
@@ -138,7 +133,6 @@ export default function App() {
           </button>
         ))}
       </nav>
-
     </div>
   )
 }
