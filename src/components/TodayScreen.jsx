@@ -155,8 +155,8 @@ export default function TodayScreen({ zones, weather }) {
   const rainToday = rainDay?.day === 'Today'
 
   // Build the plain-English action sentence
-  const urgentNames = critical.map(z => `${z.name} (${z.crop})`)
-  const warnNames   = actionRequired.map(z => z.name)
+  const urgentNames = (critical ?? []).map(z => `${z.name} (${z.crop})`)
+  const warnNames   = (actionRequired ?? []).map(z => z.name)
 
   let actionHeadline = ''
   let actionSub = ''
@@ -246,7 +246,7 @@ export default function TodayScreen({ zones, weather }) {
             letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 2 }}>
             All Blocks — Driest First
           </div>
-          {sorted.map(z => (
+          {(sorted ?? []).map(z => (
             <BlockRow
               key={z.id}
               zone={z}

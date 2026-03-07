@@ -58,7 +58,7 @@ export default function FarmMap({ zones, farmId }) {
     zoneLayersRef.current.forEach(l => map.removeLayer(l))
     zoneLayersRef.current = []
     if (!zones.length) {
-      map.fitBounds(window.L.latLngBounds(FARMS.map(f => [f.lat, f.lng])), { padding: [60,60], maxZoom: 13 })
+      map.fitBounds(window.L.latLngBounds((FARMS ?? []).map(f => [f.lat, f.lng])), { padding: [60,60], maxZoom: 13 })
       return
     }
     zones.forEach(zone => {
