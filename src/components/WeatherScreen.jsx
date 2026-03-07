@@ -27,6 +27,7 @@ export default function WeatherScreen({ weather, loading, error, refetch }) {
   )
 
   const { current, forecast, signals } = weather
+  if (!current || !forecast || !signals) return null
   const { tonightLow, rain3, et3, netBalance, humidityMax, heatToday } = signals
   const frostAlert = tonightLow <= 0
   const frostWarn  = tonightLow <= 2 && !frostAlert
