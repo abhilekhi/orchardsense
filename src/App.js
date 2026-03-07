@@ -8,9 +8,9 @@ import { useState, useEffect } from 'https://esm.sh/react@18';
 import { FARMS } from './data/farms.js';
 import { useWeather } from './hooks/useWeather.js';
 import { useZones }  from './hooks/useZones.js';
-import { FarmMap }       from './components/FarmMap.jsx';
-import { TodayScreen }   from './components/TodayScreen.jsx';
-import { WeatherScreen } from './components/WeatherScreen.jsx';
+import FarmMap from "./src/components/FarmMap.js"
+import TodayScreen from "./src/components/TodayScreen.js"
+import WeatherScreen from "./src/components/WeatherScreen.js"
 
 // ── Logo ──────────────────────────────────────
 function Logo() {
