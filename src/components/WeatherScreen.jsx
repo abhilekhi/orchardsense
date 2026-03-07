@@ -43,25 +43,11 @@ export default function WeatherScreen({ weather, loading, error, refetch }) {
       state: frostAlert ? 'alert' : frostWarn ? 'warn' : 'ok',
     },
     {
-      icon: netBalance < -3 ? '💦' : netBalance < 0 ? '🌿' : '🌧️',
-      label: '3-Day Water Balance',
-      value: `${netBalance > 0 ? '+' : ''}${netBalance}mm`,
-      sub: `${rain3}mm rain − ${et3}mm ET`,
-      state: netBalance < -3 ? 'alert' : netBalance < 0 ? 'warn' : 'ok',
-    },
-    {
       icon: heatStress ? '🔥' : '☀️',
       label: 'Heat Today',
       value: `${heatToday}°C`,
       sub: heatStress ? 'Moisture depletes faster' : 'Normal depletion',
       state: heatStress ? 'warn' : 'ok',
-    },
-    {
-      icon: diseaseRisk ? '⚠️' : '🍃',
-      label: 'Disease Pressure',
-      value: `${humidityMax}% RH`,
-      sub: diseaseRisk ? 'Brown rot / scab risk' : 'Within safe range',
-      state: diseaseRisk ? 'warn' : 'ok',
     },
   ]
 
@@ -95,7 +81,7 @@ export default function WeatherScreen({ weather, loading, error, refetch }) {
         </div>
         {/* Signal grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: '#f1f5f9' }}>
-          {(signalData ?? []).map(({ icon, label, value, sub, state }) => (
+          {signalData.map(({ icon, label, value, sub, state }) => (
             <div key={label} style={{ background: stateColors[state].bg, padding: '12px 14px' }}>
               <div style={{ fontSize: 18, marginBottom: 4 }}>{icon}</div>
               <div style={{ fontSize: 9, fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>{label}</div>
@@ -114,7 +100,7 @@ export default function WeatherScreen({ weather, loading, error, refetch }) {
           7-Day Forecast
         </div>
         <div style={{ display: 'flex', overflowX: 'auto', scrollbarWidth: 'none' }}>
-          {(forecast ?? []).map((d, i) => {
+          {forecast.map((d, i) => {
             const rain  = d.rain >= 50
             const frost = d.low <= 2
             return (
