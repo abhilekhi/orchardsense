@@ -9,10 +9,10 @@ function deriveStatus(m) {
 }
 
 export function useZones(farmId) {
-  const [zones, setZones] = useState(() => FARMS[farmId].zones.map(z => ({ ...z })))
+  const [zones, setZones] = useState(() => (FARMS[farmId]?.zones ?? []).map(z => ({ ...z })))
 
   useEffect(() => {
-    setZones(FARMS[farmId].zones.map(z => ({ ...z })))
+    setZones((FARMS[farmId]?.zones ?? []).map(z => ({ ...z })))
   }, [farmId])
 
   // Simulate drift until real sensors connected
